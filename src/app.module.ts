@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
-import { RedisModule } from './redis/redis.module';
+import { RedisModule } from './common/redis/redis.module';
+import { MoviesModule } from './movies/movies.module';
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal : true
-  }
-  ), RedisModule],
+  }),RedisModule, MoviesModule],
   controllers: [AppController],
   providers: [AppService],
 })
