@@ -1,10 +1,17 @@
 import { Module } from '@nestjs/common';
-import { MoviesController } from './movies.controller';
-import { MoviesService } from './movies.service';
+import {  CrawlController, MoviesController } from './movies.controller';
+import { MoviesService } from './services/movies.service';
 import { HttpModule } from '@nestjs/axios';
+import { MovieSyncService } from './services/movie.sync.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { MovieSchema,Movie } from './schema/movie.schema';
 @Module({
-  imports : [HttpModule],
-  controllers: [MoviesController],
-  providers: [MoviesService]
+  imports : [HttpModule,
+    MongooseModule.forFeature([
+      {name : Movie.name, schema :MovieSchema}
+    ]),
+  ],
+  controllers: [MoviesController,CrawlController],
+  providers: [MoviesService,MovieSyncService]
 })
 export class MoviesModule {}

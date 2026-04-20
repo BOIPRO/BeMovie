@@ -9,9 +9,6 @@ import Redis from 'ioredis';
             useFactory : async () => {
                 const redis = Redis;
             const client = new redis(process.env.REDIS_URL!);
-            client.on("connect",()=> {
-                console.log("Success");
-            })
              client.on("error",(error)=> {
                 console.log(error);
             })

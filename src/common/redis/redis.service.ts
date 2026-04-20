@@ -3,12 +3,11 @@ import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService {
-    constructor(@Inject('REDIS_CLIENT') private redis: Redis) { }
+    constructor(@Inject('REDIS_CLIENT') private redis: Redis) {}
     async set(key: string, value: string, ttl: number = 600) {
         try {
             const data = typeof value === 'string' ? value : JSON.stringify(value);
-            const result = await this.redis.set(key, data, "EX", ttl)
-            return result
+           await this.redis.set(key, data, "EX", ttl)
         } catch (error) {
            console.error(`[Redis Error] Set key ${key} failed:`, error);
         return null;
