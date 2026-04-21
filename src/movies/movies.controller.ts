@@ -1,28 +1,27 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query,ValidationPipe  } from '@nestjs/common';
 import { MoviesService } from './services/movies.service';
 import { MovieSyncService } from './services/movie.sync.service';
+import { GetAnime } from './dto/get-anime.dto';
+import { SearchAnime } from './dto/search-anime.dto';
+import { GetTrendingAnime } from './dto/get-trending-anime.dto';
 
 @Controller('movies')
 export class MoviesController {
     constructor (private readonly moviesService : MoviesService ) {}
     @Get('page')
-    async getAnimes( @Query('page',ParseIntPipe) page: number, @Query('limit',ParseIntPipe) limit: number) {
-       const dataPage = await this.moviesService.getPageAnimes(`page:${page}`,page,limit)
+    async getAnimes( @Query(new ValidationPipe()) query : GetAnime) {
+       const dataPage = await this.moviesService.getPageAnimes(`page:${query.page}`,query.page,query.limit)
        return dataPage
     }
     @Get('search')
-    async searchAnime(@Query('s') searchvalue : string,@Query('page',ParseIntPipe) pageNumber: number, @Query('limit',ParseIntPipe) limit : number) {
-        const data = await this.moviesService.searchAnime(searchvalue,pageNumber,limit);
+    async searchAnime(@Query(new ValidationPipe()) query : SearchAnime) {
+        const data = await this.moviesService.searchAnime(query.s,query.page,query.limit);
         return data
     }
-    @Get('home') 
-    async getDataHome(@Query('trending',ParseIntPipe) trendingValue: number) {
-        const dataTrending = await this.moviesService.getTrendingAnimes('trending',trendingValue);
-        const dataPage = await this.moviesService.getPageAnimes('page:1',1,30);
-        return {
-            trending : dataTrending,
-            data : dataPage
-        }
+    @Get('trending')
+    async getTrendingAnime(@Query(new ValidationPipe()) query : GetTrendingAnime  ) {
+        const dataTrending = await this.moviesService.getTrendingAnimes('trending',query.amount);
+        return dataTrending
     }
 }
 @Controller('crawl')
