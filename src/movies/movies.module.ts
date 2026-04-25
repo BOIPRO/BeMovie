@@ -5,6 +5,7 @@ import { HttpModule } from '@nestjs/axios';
 import { MovieSyncService } from './services/movie.sync.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MovieSchema,Movie } from './schema/movie.schema';
+import { StreamService } from './services/stream.service';
 @Module({
   imports : [HttpModule,
     MongooseModule.forFeature([
@@ -12,6 +13,6 @@ import { MovieSchema,Movie } from './schema/movie.schema';
     ]),
   ],
   controllers: [MoviesController,CrawlController],
-  providers: [MoviesService,MovieSyncService]
+  providers: [MoviesService,MovieSyncService,StreamService]
 })
 export class MoviesModule {}

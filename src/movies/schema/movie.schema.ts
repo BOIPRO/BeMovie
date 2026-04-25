@@ -1,11 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { Relation, RelationSchema } from './relation.schema';
 
 @Schema({ timestamps: true }) 
 export class Movie extends Document {
   @Prop({ required: true, unique: true, index: true })
   anilistId!: number;
-
+   @Prop()
+    idMal!: number;
   @Prop({ required: true, index: true })
   titleRomaji!: string;
 
@@ -36,6 +38,9 @@ export class Movie extends Document {
   anilistUpdatedAt!: number;
   @Prop()
   isAdult! : boolean;
+  @Prop({type : [RelationSchema],default:[]})
+  relations!: Relation[];
+
 }
 
 export const MovieSchema = SchemaFactory.createForClass(Movie);

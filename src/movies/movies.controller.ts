@@ -4,10 +4,15 @@ import { MovieSyncService } from './services/movie.sync.service';
 import { GetAnime } from './dto/get-anime.dto';
 import { SearchAnime } from './dto/search-anime.dto';
 import { GetTrendingAnime } from './dto/get-trending-anime.dto';
+import { StreamService } from './services/stream.service';
+import { url } from 'inspector';
 
 @Controller('movies')
 export class MoviesController {
-    constructor (private readonly moviesService : MoviesService ) {}
+    constructor (
+        private readonly moviesService : MoviesService,
+        private readonly streamService : StreamService
+    ) {}
     @Get('page')
     async getAnimes( @Query(new ValidationPipe()) query : GetAnime) {
        const dataPage = await this.moviesService.getPageAnimes(`page:${query.page}`,query.page,query.limit)
@@ -22,6 +27,14 @@ export class MoviesController {
     async getTrendingAnime(@Query(new ValidationPipe()) query : GetTrendingAnime  ) {
         const dataTrending = await this.moviesService.getTrendingAnimes('trending',query.amount);
         return dataTrending
+    }
+    @Get('info')
+    async GetInfoAnime (@Query('id') id : string) {
+        return await this.streamService.getAnimeEpisodes(id)
+    }
+    @Get('stream')
+    async getStreamAnime (@Query('id') id : string) {
+       return (await this.streamService.getStreamLinks("One-Piece-ep-5"));
     }
 }
 @Controller('crawl')

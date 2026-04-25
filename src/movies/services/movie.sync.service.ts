@@ -37,7 +37,7 @@ export class MovieSyncService {
                 currentPage++;
                 await sleep(2000);
 
-            } catch (error:any) {
+            } catch (error: any) {
                 this.logger.error(`Error at page ${currentPage}: ${error.message}`);
                 if (error.response?.status === 429) {
                     this.logger.warn('limit sppeed');
@@ -57,6 +57,7 @@ export class MovieSyncService {
           pageInfo { hasNextPage }
           media(type: ANIME, sort: UPDATED_AT_DESC,isAdult: false,genre_not_in: ["Ecchi"],) {
             id
+            idMal
             title { english romaji }
             coverImage { large }
             genres
@@ -66,6 +67,23 @@ export class MovieSyncService {
             trending
             updatedAt
             isAdult
+            relations {
+        edges {
+          relationType
+          node {
+            id
+            idMal
+            title {
+              romaji
+              english
+            }
+            format 
+            type  
+            status
+            coverImage { large }
+          }
+        }
+      }
           }
         }
       }
@@ -74,26 +92,48 @@ export class MovieSyncService {
     }
     // Save Mongoose
     private async saveToDb(media: any[]) {
-        const operations = media.map((item) => ({
-            updateOne: {
+    
+        const operations = media.map((item) => {
+            const formattedRelations = item.relations?.edges
+            ? item.relations.edges
+                .filter((edge: any) => edge.node.type === 'ANIME') 
+                .map((edge: any) => ({
+                    relationType: edge.relationType,
+                    anilistId: edge.node.id,
+                    idMal: edge.node.idMal,
+                    title: {
+                        romaji: edge.node.title.romaji,
+                        english: edge.node.title.english,
+                    },
+                    format: edge.node.format,
+                    status: edge.node.status,
+                    coverImage: edge.node.coverImage?.medium,
+                }))
+            : [];
+            return {
+                 updateOne: {
                 filter: { anilistId: item.id },
                 update: {
                     $set: {
+                        idMal : item.idMal,
                         titleRomaji: item.title.romaji,
                         titleEnglish: item.title.english,
                         coverImage: item.coverImage.large,
                         genres: item.genres,
                         averageScore: item.averageScore,
-                        popularity : item.popularity,
-                        trending : item.trending,
+                        popularity: item.popularity,
+                        trending: item.trending,
                         description: item.description,
                         anilistUpdatedAt: item.updatedAt,
-                        isAdult : item.isAdult
+                        isAdult: item.isAdult,
+                        relations: formattedRelations,
                     },
                 },
-                upsert: true, 
+                upsert: true,
             },
-        }));
+            }
+           
+        });
 
         await this.movieModel.bulkWrite(operations, { ordered: false });
     }

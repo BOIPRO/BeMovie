@@ -18,7 +18,7 @@ export class MoviesService {
     }
     else {
       const expiretime = 300
-      const data = await this.movieModel.find().sort({ trending: -1 }).select('anilistId titleRomaji titleEnglish coverImage description').limit(limit).lean().exec()
+      const data = await this.movieModel.find().sort({ trending: -1 }).select('anilistId idMal titleRomaji titleEnglish coverImage description').limit(limit).lean().exec()
       await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
     }
@@ -45,7 +45,7 @@ export class MoviesService {
         .sort({ popularity: -1 })
         .skip(skip)
         .limit(limit)
-        .select('anilistId titleRomaji titleEnglish coverImage description')
+        .select('anilistId titleRomaji idMal titleEnglish coverImage description')
         .lean()
         .exec(),
       this.movieModel.countDocuments({ popularity: { $gt: 200000 } })
@@ -62,7 +62,7 @@ export class MoviesService {
       this.movieModel.aggregate([
         {
           $search: {
-            index: "searchanime",
+            index: "BSearch",
             text: {
               query: search,
               path: ["titleRomaji","titleEnglish"]
