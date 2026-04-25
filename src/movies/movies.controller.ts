@@ -29,8 +29,8 @@ export class MoviesController {
         return dataTrending
     }
     @Get('info')
-    async GetInfoAnime (@Query('id') id : string) {
-        return await this.streamService.getAnimeEpisodes(id)
+    async GetInfoAnime (@Query('id') id : number) {
+        return (await this.moviesService.findOneAnime(id))
     }
     @Get('stream')
     async getStreamAnime (@Query('epsisodeId') epsisodeId  : string) {

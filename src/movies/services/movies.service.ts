@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { RedisService } from 'src/common/redis/redis.service';
 import { Model } from 'mongoose';
 import { Movie } from "../schema/movie.schema";
@@ -23,7 +23,14 @@ export class MoviesService {
       return data
     }
   }
-
+  async findOneAnime(id : number) {
+    try {
+      const data = await this.movieModel.find({anilistId : id}).select('idMal titleRomaji titleEnglish coverImage description averageScore genres ')
+    return data 
+    } catch (error) {
+      throw new NotFoundException("Cant find anime")
+    }
+  }
   async getPageAnimes(key: string, page: number, limit: number) {
     const data = await this.redisService.get(key);
     if (data) {

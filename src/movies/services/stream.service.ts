@@ -1,5 +1,6 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
 import { META, ANIME } from '@consumet/extensions';
+import { info } from "console";
 @Injectable()
 export class StreamService {
     private anilist: InstanceType<typeof META.Anilist>;
@@ -22,16 +23,18 @@ export class StreamService {
                 url
             ]
         } catch (error) {
-            console.log(error)
+            throw new NotFoundException('Not found link stream');
         }
     }
 
     async getAnimeEpisodes(id: string) {
         try {
-            return (await this.anilist.fetchAnimeInfo(id));
+            const infoData = await this.anilist.fetchAnimeInfo(id);
+            return infoData
+
         } catch (error) {
             throw new HttpException(
-                'Server phim đang bảo trì, vui lòng thử lại sau!',
+                'Film sever is error',
                 HttpStatus.SERVICE_UNAVAILABLE,
             );
 
