@@ -33,8 +33,8 @@ export class MoviesController {
         return await this.streamService.getAnimeEpisodes(id)
     }
     @Get('stream')
-    async getStreamAnime (@Query('id') id : string) {
-       return (await this.streamService.getStreamLinks("One-Piece-ep-5"));
+    async getStreamAnime (@Query('epsisodeId') epsisodeId  : string) {
+       return (await this.streamService.getStreamLinks(epsisodeId));
     }
 }
 @Controller('crawl')
