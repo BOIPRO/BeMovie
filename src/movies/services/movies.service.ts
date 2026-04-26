@@ -37,7 +37,7 @@ export class MoviesService {
       return data;
     }
     else {
-      const expiretime = 300
+      const expiretime = 1
       const data = await this.getPage(page, limit);
       await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
@@ -49,7 +49,7 @@ export class MoviesService {
     const [data,totalPages] = await Promise.all([
       this.movieModel
         .find()
-        .sort({ popularity: -1 })
+        .sort({popularity : -1})
         .skip(skip)
         .limit(limit)
         .select('anilistId titleRomaji idMal titleEnglish coverImage description')
@@ -69,7 +69,7 @@ export class MoviesService {
       this.movieModel.aggregate([
         {
           $search: {
-            index: "BSearch",
+            index: "default",
             text: {
               query: search,
               path: ["titleRomaji","titleEnglish"]

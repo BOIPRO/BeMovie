@@ -55,7 +55,14 @@ export class MovieSyncService {
       query ($page: Int) {
         Page(page: $page, perPage: 50) {
           pageInfo { hasNextPage }
-          media(type: ANIME, sort: UPDATED_AT_DESC,isAdult: false,genre_not_in: ["Ecchi"],) {
+          media(
+          type: ANIME,
+            sort: UPDATED_AT_DESC
+            isAdult: false,
+            genre_not_in: ["Ecchi"],
+            format_in: [TV, MOVIE, OVA, ONA],
+            status_in: [RELEASING, NOT_YET_RELEASED,FINISHED]
+            ) {
             id
             idMal
             title { english romaji }

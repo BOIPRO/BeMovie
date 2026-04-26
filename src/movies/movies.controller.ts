@@ -28,6 +28,10 @@ export class MoviesController {
         const dataTrending = await this.moviesService.getTrendingAnimes('trending',query.amount);
         return dataTrending
     }
+    @Get('epsiode')
+    async GetEpsiode(@Query('id') id : string) {
+        return await this.streamService.getAnimeEpisodes(id)
+    }
     @Get('info')
     async GetInfoAnime (@Query('id') id : number) {
         return (await this.moviesService.findOneAnime(id))

@@ -29,7 +29,7 @@ export class StreamService {
 
     async getAnimeEpisodes(id: string) {
         try {
-            const infoData = await this.anilist.fetchAnimeInfo(id);
+            const infoData = (await this.anilist.fetchAnimeInfo(id)).episodes;
             return infoData
 
         } catch (error) {
