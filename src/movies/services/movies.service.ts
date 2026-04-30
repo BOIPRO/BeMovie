@@ -24,12 +24,11 @@ export class MoviesService {
     }
   }
   async findOneAnime(id : number) {
-    try {
-      const data = await this.movieModel.find({anilistId : id}).select('idMal titleRomaji titleEnglish coverImage description averageScore genres ')
-    return data 
-    } catch (error) {
-      throw new NotFoundException("Cant find anime")
-    }
+      const data = await this.movieModel.find({ anilistId: id}).select('titleRomaji titleEnglish coverImage description averageScore genres ')
+    if (!data) {
+    throw new NotFoundException("Cant find anime");
+  }
+  return data 
   }
   async getPageAnimes(key: string, page: number, limit: number) {
     const data = await this.redisService.get(key);

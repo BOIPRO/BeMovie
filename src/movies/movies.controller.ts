@@ -33,7 +33,7 @@ export class MoviesController {
         return await this.streamService.getAnimeEpisodes(id)
     }
     @Get('info')
-    async GetInfoAnime (@Query('id') id : number) {
+    async GetInfoAnime (@Query('id',ParseIntPipe) id : number) {
         return (await this.moviesService.findOneAnime(id))
     }
     @Get('stream')

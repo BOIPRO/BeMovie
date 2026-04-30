@@ -35,7 +35,7 @@ export class MovieSyncService {
 
                 hasNextPage = pageInfo.hasNextPage;
                 currentPage++;
-                await sleep(2000);
+                await sleep(1000);
 
             } catch (error: any) {
                 this.logger.error(`Error at page ${currentPage}: ${error.message}`);
@@ -62,6 +62,7 @@ export class MovieSyncService {
             genre_not_in: ["Ecchi"],
             format_in: [TV, MOVIE, OVA, ONA],
             status_in: [RELEASING, NOT_YET_RELEASED,FINISHED]
+            idMal_not: null,
             ) {
             id
             idMal

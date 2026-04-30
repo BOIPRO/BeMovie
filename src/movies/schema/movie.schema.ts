@@ -4,10 +4,10 @@ import { Relation, RelationSchema } from './relation.schema';
 
 @Schema({ timestamps: true }) 
 export class Movie extends Document {
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ required: true, unique: true })
   anilistId!: number;
-   @Prop()
-    idMal!: number;
+   @Prop({ required: true})
+  idMal!: number;
   @Prop({ required: true, index: true })
   titleRomaji!: string;
 
