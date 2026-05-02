@@ -33,8 +33,10 @@
     "class-validator": "^0.15.1",
     "ioredis": "^5.10.1",
     "mongoose": "^9.4.1",
+    "piscina": "^5.1.4",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "slugify": "^1.6.9"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

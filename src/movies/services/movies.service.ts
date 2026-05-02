@@ -9,7 +9,7 @@ export class MoviesService {
     private readonly redisService: RedisService,
     @InjectModel(Movie.name)
     private movieModel: Model<Movie>
-  ) { }
+  ) {}
 
   async getTrendingAnimes(key: string, limit: number) {
     const dataTrending = await this.redisService.get(key);
@@ -17,8 +17,8 @@ export class MoviesService {
       return dataTrending;
     }
     else {
-      const expiretime = 300
-      const data = await this.movieModel.find().sort({ trending: -1 }).select('anilistId idMal titleRomaji titleEnglish coverImage description').limit(limit).lean().exec()
+      const expiretime = 1
+      const data = await this.movieModel.find().sort({ trending: -1 }).select('slug idMal titleRomaji titleEnglish coverImage description').limit(limit).lean().exec()
       await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
     }
@@ -44,18 +44,24 @@ export class MoviesService {
   }
 
   async getPage(page: number = 1, limit: number = 30) {
-    const skip = (page - 1) * limit;
-    const [data,totalPages] = await Promise.all([
+    const skipOffset = 10; 
+    const skip = (page - 1) * limit + skipOffset;
+    const filter = { status: { $in: ["RELEASING", "FINISHED"]},
+    trending: { $gt: 0 }
+  };
+    const [data,totalDocuments] = await Promise.all([
       this.movieModel
-        .find()
-        .sort({popularity : -1})
+        .find(filter)
+        .sort({trending : -1})
         .skip(skip)
         .limit(limit)
-        .select('anilistId titleRomaji idMal titleEnglish coverImage description')
+        .select('slug titleRomaji idMal titleEnglish coverImage description')
         .lean()
         .exec(),
-      this.movieModel.countDocuments({ popularity: { $gt: 200000 } })
+      this.movieModel.countDocuments(filter)
     ])
+    const effectiveTotal = Math.max(0, totalDocuments - skipOffset);
+    const totalPages = Math.ceil(effectiveTotal / limit);
     return {
       media : data,
       totalPages : totalPages

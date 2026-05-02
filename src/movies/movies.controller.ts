@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseIntPipe, Query,ValidationPipe  } from '@nestjs/common';
 import { MoviesService } from './services/movies.service';
-import { MovieSyncService } from './services/movie.sync.service';
+import { BotService } from './services/bot.sync.service';
 import { GetAnime } from './dto/get-anime.dto';
 import { SearchAnime } from './dto/search-anime.dto';
 import { GetTrendingAnime } from './dto/get-trending-anime.dto';
@@ -28,25 +28,25 @@ export class MoviesController {
         const dataTrending = await this.moviesService.getTrendingAnimes('trending',query.amount);
         return dataTrending
     }
-    @Get('epsiode')
-    async GetEpsiode(@Query('id') id : string) {
+    @Get('episodes')
+    async getAnimeEpisode(@Query('id',ParseIntPipe) id : number) {
         return await this.streamService.getAnimeEpisodes(id)
     }
     @Get('info')
     async GetInfoAnime (@Query('id',ParseIntPipe) id : number) {
         return (await this.moviesService.findOneAnime(id))
     }
-    @Get('stream')
-    async getStreamAnime (@Query('epsisodeId') epsisodeId  : string) {
-       return (await this.streamService.getStreamLinks(epsisodeId));
-    }
+    // @Get('stream')
+    // async getStreamAnime (@Query('epsisodeId') epsisodeId  : string) {
+    //    return (await this.streamService.getStreamLinks(epsisodeId));
+    // }
 }
 @Controller('crawl')
 export class CrawlController {
-    constructor ( private movieSyncService : MovieSyncService ) {}
+    constructor ( private movieSyncService : BotService ) {}
     @Get()
     async CrawlAnime() {
-        await this.movieSyncService.handleSync();
+        await this.movieSyncService.runTask();
         return "Success"
     }
 }

@@ -1,44 +1,75 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
-import { META, ANIME } from '@consumet/extensions';
-import { info } from "console";
+import { HttpException, HttpStatus, Injectable, NotFoundException, } from "@nestjs/common";
+import { RedisService } from "src/common/redis/redis.service";
+import { Episode } from "../schema/episode.schema";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { ConfigService } from "@nestjs/config";
+import axios from 'axios';
+export interface EpisodeAnime {
+    episodeNumber: string,
+    episodeId: string,
+    server: string,
+}
+export interface AnimeMapperResponse {
+    provider: string,
+    limit: number,
+    offset: number,
+    total: number,
+    hasNextPage: boolean,
+    episodes: EpisodeAnime[],
+}
+
 @Injectable()
 export class StreamService {
-    private anilist: InstanceType<typeof META.Anilist>;
-    constructor() {
-        this.anilist = new META.Anilist(new ANIME.AnimeSaturn());
-    }
-    async getStreamLinks(episodeId: string) {
+    constructor(
+        private readonly redisService: RedisService,
+        @InjectModel(Episode.name)
+        private episodeModel: Model<Episode>,
+        private configService: ConfigService
+    ) { }
+    private async saveToDB(id: number, epsiodes: EpisodeAnime[]) {
         try {
-            const data = await this.anilist.fetchEpisodeSources(episodeId);
-            const sources = data.sources[0];
-            const url = sources.url
-            if (sources.isM3U8) {
-                const playListM3u8 = await fetch(url).then(res => res.text());
-                const baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
-                const linkM3u8 = (playListM3u8.match(/^\.\/.+\.m3u8$/gm) || [])
-                    .map(line => baseUrl + line.replace("./", ""));
-                return linkM3u8;
-            }
-            return [
-                url
-            ]
+            const operations = (epsiodes.map((item) => {
+                return {
+                    updateOne: {
+                        filter: {
+                            episodeNumber: item.episodeNumber,
+                             anilistId: id,
+                        },
+                        update: {
+                            $set: {
+                                episodeId: item.episodeId,
+                                server: item.server,
+                            },
+                        },
+                        upsert: true,
+                    },
+                }
+            }));
+            await this.episodeModel.bulkWrite(operations, { ordered: false });
         } catch (error) {
-            throw new NotFoundException('Not found link stream');
+            console.log(error)
         }
     }
-
-    async getAnimeEpisodes(id: string) {
+    private async fetchAniMapper (id : number) {
         try {
-            const infoData = (await this.anilist.fetchAnimeInfo(id)).episodes;
-            return infoData
-
+         const url = `${this.configService.get<string>('ANIMAPPER_API')}/stream/episodes?id=${id}&provider=ANIMEVIETSUB`;
+        const res  = await axios.get(url);
+        return res.data 
         } catch (error) {
-            throw new HttpException(
-                'Film sever is error',
-                HttpStatus.SERVICE_UNAVAILABLE,
-            );
-
+            return null
         }
 
+    }
+    async getAnimeEpisodes(id: number) {
+        const listEpsiode: EpisodeAnime[] = await this.episodeModel.find({ anilistId: id }).select(" -_id episodeNumber episodeId server")
+        if (listEpsiode.length != 0) {
+            return listEpsiode
+        }
+        const data : AnimeMapperResponse = await this.fetchAniMapper(id);
+        // await this.saveToDB(id,data.episodes)
+        if(!data)
+            return []
+       return data.episodes
     }
 }

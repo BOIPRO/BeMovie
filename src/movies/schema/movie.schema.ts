@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Relation, RelationSchema } from './relation.schema';
 
 @Schema({ timestamps: true }) 
 export class Movie extends Document {
@@ -10,7 +9,8 @@ export class Movie extends Document {
   idMal!: number;
   @Prop({ required: true, index: true })
   titleRomaji!: string;
-
+  @Prop({unique : true, index : true})
+  slug! : string;
   @Prop()
   titleEnglish!: string;
 
@@ -19,7 +19,6 @@ export class Movie extends Document {
 
   @Prop({ index: true }) 
   genres!: string[];
-
   @Prop({ index: true }) 
   averageScore!: number;
   @Prop({ index: true })
@@ -31,16 +30,12 @@ export class Movie extends Document {
 
   @Prop({ default: 'FINISHED' })
   status!: string;
-  @Prop()
-  episodes!: number;
-
   @Prop({ index: true }) // CronJob
   anilistUpdatedAt!: number;
   @Prop()
   isAdult! : boolean;
-  @Prop({type : [RelationSchema],default:[]})
-  relations!: Relation[];
-
+  @Prop({default : false ,index : true})
+  isPublished! : boolean;
 }
 
 export const MovieSchema = SchemaFactory.createForClass(Movie);
