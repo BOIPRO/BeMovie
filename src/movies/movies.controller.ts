@@ -36,10 +36,12 @@ export class MoviesController {
     async GetInfoAnime (@Query('id',ParseIntPipe) id : number) {
         return (await this.moviesService.findOneAnime(id))
     }
-    // @Get('stream')
-    // async getStreamAnime (@Query('epsisodeId') epsisodeId  : string) {
-    //    return (await this.streamService.getStreamLinks(epsisodeId));
-    // }
+    @Get('stream')
+    async getStreamAnime (@Query('anilistId',ParseIntPipe) anilistId  : number,@Query("episodeSlug") episodeSlug : string ) {
+       console.log(anilistId)
+       console.log(episodeSlug)
+        return (await this.streamService.getStreamingLink(anilistId,episodeSlug));
+    }
 }
 @Controller('crawl')
 export class CrawlController {

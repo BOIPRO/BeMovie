@@ -44,15 +44,12 @@ export class MoviesService {
   }
 
   async getPage(page: number = 1, limit: number = 30) {
-    const skipOffset = 10; 
-    const skip = (page - 1) * limit + skipOffset;
-    const filter = { status: { $in: ["RELEASING", "FINISHED"]},
-    trending: { $gt: 0 }
-  };
+    const skip = (page - 1) * limit 
+    const filter = {isPublished : true};
     const [data,totalDocuments] = await Promise.all([
       this.movieModel
         .find(filter)
-        .sort({trending : -1})
+        .sort({ lastChecked: -1 })
         .skip(skip)
         .limit(limit)
         .select('slug titleRomaji idMal titleEnglish coverImage description')
@@ -60,7 +57,7 @@ export class MoviesService {
         .exec(),
       this.movieModel.countDocuments(filter)
     ])
-    const effectiveTotal = Math.max(0, totalDocuments - skipOffset);
+    const effectiveTotal = Math.max(0, totalDocuments);
     const totalPages = Math.ceil(effectiveTotal / limit);
     return {
       media : data,

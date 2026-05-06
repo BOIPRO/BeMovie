@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import axios from 'axios';
 import slugify from 'slugify';
+import { ConnectModel,Movies } from './db.mjs';
 const createSlug = (text) => {
     return slugify(text, {
         replacement: '-',
@@ -12,28 +13,7 @@ const createSlug = (text) => {
     });
 };
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const moviesSchema = new Schema({
-    anilistId: { type: Number, required: true, unique: true },
-    idMal: { type: Number, required: true },
-    titleRomaji: { type: String, required: true, index: true },
-    slug: { type: String, unique: true, index: true },
-    titleEnglish: { type: String },
-    coverImage: { type: String },
-    genres: { type: [String], index: true },
-    averageScore: { type: Number, index: true },
-    popularity: { type: Number, index: true },
-    trending: { type: Number, index: true },
-    description: { type: String },
-    status: { type: String, default: 'FINISHED' },
-    anilistUpdatedAt: { type: Number, index: true },
-    isAdult: { type: Boolean },
-    isPublished: { type: Boolean, default: false, index: true }
-})
-const ConnectModel = async (config) => {
-    const { dbUrl } = config
-    console.log(dbUrl)
-    await mongoose.connect(`${dbUrl}test`)
-}
+
 
 const ANILIST_URL = 'https://graphql.anilist.co';
 const fetchFromAniList = async (page) => {
@@ -58,27 +38,15 @@ const fetchFromAniList = async (page) => {
             genres
             averageScore
             description
+            status
             popularity
             trending
             updatedAt
             isAdult
-            relations {
-        edges {
-          relationType
-          node {
-            id
-            idMal
-            title {
-              romaji
-              english
+            episodes
+            nextAiringEpisode {
+            episode
             }
-            format 
-            type  
-            status
-            coverImage { large }
-          }
-        }
-      }
           }
         }
       }
@@ -91,29 +59,30 @@ const saveToDb = async (Movies, media) => {
         return {
             updateOne: {
                 filter: {
-                    $or: [
-                        { anilistId: item.id },
-                        { slug: createSlug(`${item.title.romaji}-${item.id}`) }
-                    ]
+                    anilistId: item.id
                 },
-            },
-            update: {
-                $set: {
-                    idMal: item.idMal,
-                    titleRomaji: item.title.romaji,
-                    titleEnglish: item.title.english,
-                    coverImage: item.coverImage.large,
-                    genres: item.genres,
-                    averageScore: item.averageScore,
-                    popularity: item.popularity,
-                    trending: item.trending,
-                    description: item.description,
-                    anilistUpdatedAt: item.updatedAt,
-                    isAdult: item.isAdult,
-
+                update: {
+                    $set: {
+                        idMal: item.idMal,
+                        titleRomaji: item.title.romaji,
+                        titleEnglish: item.title.english,
+                        coverImage: item.coverImage.large,
+                        genres: item.genres,
+                        averageScore: item.averageScore,
+                        popularity: item.popularity,
+                        trending: item.trending,
+                        description: item.description,
+                        anilistUpdatedAt: item.updatedAt,
+                        slug: createSlug(`${item.title.romaji}-${item.id}`),
+                        isAdult: item.isAdult,
+                        lastChecked: new Date(),
+                        episodes : item.episodes,
+                        status : item.status,
+                        nextAiringEpisode : item.nextAiringEpisode
+                    },
                 },
-            },
-            upsert: true,
+                upsert: true,
+            }
         }
     })
     await Movies.bulkWrite(operations, { ordered: false });
@@ -135,7 +104,7 @@ const CrawlMovie = async (Movies) => {
 
             hasNextPage = pageInfo.hasNextPage;
             currentPage++;
-            await sleep(1000);
+            await sleep(2000);
 
         } catch (error) {
             console.error(`Error at page ${currentPage}: ${error.message}`);
@@ -151,7 +120,6 @@ const CrawlMovie = async (Movies) => {
 }
 const handleAsync = async (config) => {
     await ConnectModel(config)
-    const Movies = mongoose.model('movies', moviesSchema)
     await CrawlMovie(Movies);
 }
 export default handleAsync

@@ -11,7 +11,7 @@ export class BotService implements OnModuleDestroy {
         this.piscina = new Piscina({
             filename: PATHS.BOT_WORKER_DEV,
             minThreads: 1,
-            maxThreads: 2,
+            maxThreads: 1,
         });
     }
     @Cron(CronExpression.EVERY_DAY_AT_2AM)

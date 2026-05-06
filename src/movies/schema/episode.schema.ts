@@ -11,5 +11,7 @@ export class Episode {
     episodeId!: string; 
     @Prop({ default: ""})
     url!: string; 
+    @Prop ({required : true,index : true})
+    episodeSlug! : string
 }
 export const EpsiodeSchema = SchemaFactory.createForClass(Episode);
