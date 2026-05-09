@@ -2,9 +2,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 @Schema({ timestamps: true })
 export class User {
     @Prop({ required: true, index: true, unique: true })
-    username!: number;
-    @Prop({ required: true, index: true, unique: true })
-    email!: number;
+    username!: string;
+    @Prop({ required: true, index: true, unique: true})
+    email!: string;
     @Prop({ required: true })
     password!: string;
     @Prop({ default: false })
@@ -14,7 +14,9 @@ export class User {
     @Prop()
     refreshTokenExpireAt!: Date
     @Prop()
-    verifyToken!: string
+    verifyOTP!: string
+    @Prop()
+    expireOTP! : Date
     @Prop({
         expires: 0,
         default: () =>
