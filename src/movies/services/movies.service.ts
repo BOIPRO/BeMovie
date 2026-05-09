@@ -17,7 +17,7 @@ export class MoviesService {
       return dataTrending;
     }
     else {
-      const expiretime = 1
+      const expiretime = 300
       const data = await this.movieModel.find().sort({ trending: -1 }).select('slug idMal titleRomaji titleEnglish coverImage description').limit(limit).lean().exec()
       await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
@@ -36,7 +36,7 @@ export class MoviesService {
       return data;
     }
     else {
-      const expiretime = 1
+      const expiretime = 300
       const data = await this.getPage(page, limit);
       await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data

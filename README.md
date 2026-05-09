@@ -1,7 +1,7 @@
 ```mermaid
     graph LR
     subgraph Database
-    subgraph test
+    subgraph movies
     F[movies]
     K[episodes]
     end
