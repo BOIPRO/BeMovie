@@ -51,7 +51,7 @@ const getLinkEpisode = async (id,listEpisode) => {
       console.log(listEpisode[i])
       if (status >= 500) {
         ErrorCount++;
-        if (ErrorCount >1) {
+        if (ErrorCount >5) {
             console.error(`Server Animapper dropdown streaming link ${status}`);
             return null
         }
@@ -153,8 +153,8 @@ const botCheckAnime = async () => {
         }
       ]
     })
-    .sort({ isPublished: -1 })
-    .select("anilistId titleRomaji episodes status nextAiringEpisode")
+    .sort({trending : -1 })
+    .select("anilistId titleRomaji episodes status nextAiringEpisode trending")
     for (const anime of data) {
       console.log(`Dang kiem tra anime ${anime.titleRomaji} `)
       const totalEpisode = anime.episodes ? anime.episodes : anime.nextAiringEpisode.episode - 1

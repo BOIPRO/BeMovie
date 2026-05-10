@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schema/user.schema';
 import { Model } from 'mongoose';
@@ -19,30 +19,46 @@ export class AuthService {
         return otp;
     }
     private async getUserByEmail(email: string): Promise<User | null> {
-        const result = await this.userModel.findOne({ email: email })
+        const result = await this.userModel.findOne({ email: email }).select("username isVerify").exec()
         return result
     }
-    private async createUser(email: string, username: string, password: string): Promise<string> {
-        const user = await this.getUserByEmail(email)
+    private async updateUserToDB(email: string, username: string, password: string): Promise<string> {
         const otp = this.createOTP();
-        if (user) {
-            
-        }
-        else {
-            const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
-            const hashPassword = this.hashPassword(password)
-            await this.userModel.updateOne(
-                { email: email},
-                { $set: { 
-                    username : username,
-                    verifyOTP: otpHash, 
+        const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+        const hashPassword = this.hashPassword(password)
+        await this.userModel.updateOne(
+            { email: email },
+            {
+                $set: {
+                    username: username,
+                    verifyOTP: otpHash,
                     expireOTP: new Date(),
-                    password : hashPassword,
-                } }, 
-                { upsert: true }
-            )
-        }
+                    password: hashPassword,
+                }
+            },
+            { upsert: true }
+        )
         return otp
+    }
+    private async checkUsernameUnique(username: string) {
+        const exists = await this.userModel.findOne({ username }).exec();
+        if (exists) throw new ConflictException("Username nay da ton tai");
+    }
+    async validateEmailForRegistration(email: string, username: string, password: string): Promise<string> {
+        const user = await this.getUserByEmail(email)
+        if (user) {
+            if (user.isVerify)
+                throw new ConflictException("Email da ton tai")
+            if (user.username === username) {
+                return await this.updateUserToDB(email, username, password)
+            }
+            else {
+                await this.checkUsernameUnique(username)
+                return await this.updateUserToDB(email, username, password)
+            }
+        }
+        else
+            return await this.updateUserToDB(email, username, password)
     }
 
 
