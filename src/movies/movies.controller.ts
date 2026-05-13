@@ -1,9 +1,9 @@
 import { Controller, Get, Param, ParseIntPipe, Query,ValidationPipe  } from '@nestjs/common';
 import { MoviesService } from './services/movies.service';
 import { BotService } from './services/bot.sync.service';
-import { GetAnime } from './dto/get-anime.dto';
-import { SearchAnime } from './dto/search-anime.dto';
-import { GetTrendingAnime } from './dto/get-trending-anime.dto';
+import { GetAnime } from '../common/dto/get-anime.dto';
+import { SearchAnime } from '../common/dto/search-anime.dto';
+import { GetTrendingAnime } from '../common/dto/get-trending-anime.dto';
 import { StreamService } from './services/stream.service';
 import { url } from 'inspector';
 

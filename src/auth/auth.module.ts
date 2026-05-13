@@ -4,6 +4,7 @@ import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schema/user.schema';
 import { AuthService } from './auth.service';
+import { ResendProvider } from 'src/common/resend.provider';
 
 
 @Module({
@@ -13,6 +14,6 @@ import { AuthService } from './auth.service';
         ]),
       ],
   controllers: [AuthController],
-  providers : [AuthService]
+  providers : [AuthService,ResendProvider]
 })
 export class AuthModule {}
