@@ -103,4 +103,25 @@ export class AuthService {
             throw new UnauthorizedException('Ma xac thuc khong dung')
         }
     }
+    async resendCode (email: string) : Promise<void> {
+        const user =  await this.userModel.findOne({email:email})
+        if(user) {
+        const otp = this.createOTP();
+        const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+        await this.userModel.updateOne(
+            { email: email },
+            {
+                $set: {
+                    verifyOTP: otpHash,
+                    expireOTP: new Date(Date.now() + 3 * 60 * 1000),
+                }
+            },
+            { upsert: true }
+        )
+        await this.sendVerificationEmail(email, otp)
+        }
+        else {
+            throw new BadRequestException("Co loi xay ra")
+        }
+    }
 }
