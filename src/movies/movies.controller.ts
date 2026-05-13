@@ -5,7 +5,6 @@ import { GetAnime } from '../common/dto/get-anime.dto';
 import { SearchAnime } from '../common/dto/search-anime.dto';
 import { GetTrendingAnime } from '../common/dto/get-trending-anime.dto';
 import { StreamService } from './services/stream.service';
-import { url } from 'inspector';
 
 @Controller('movies')
 export class MoviesController {
@@ -38,9 +37,8 @@ export class MoviesController {
     }
     @Get('stream')
     async getStreamAnime (@Query('anilistId',ParseIntPipe) anilistId  : number,@Query("episodeSlug") episodeSlug : string ) {
-       console.log(anilistId)
-       console.log(episodeSlug)
-        return (await this.streamService.getStreamingLink(anilistId,episodeSlug));
+        const url : string =  (await this.streamService.getStreamingLink(anilistId,episodeSlug));
+        return {url : url}
     }
 }
 @Controller('crawl')

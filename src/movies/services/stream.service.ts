@@ -5,6 +5,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { ConfigService } from "@nestjs/config";
 import axios from 'axios';
+import { Movie } from "../schema/movie.schema";
 export interface EpisodeAnime {
     anilistID : number,
     episodeNumber: string,
@@ -21,18 +22,18 @@ export class StreamService {
         private episodeModel: Model<Episode>,
         private configService: ConfigService
     ) {}
-    async getAnimeEpisodes(id: number) {
+    async getAnimeEpisodes(id: number) : Promise<EpisodeAnime[]> {
         const listEpsiode: EpisodeAnime[] = await this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber server")
         return listEpsiode
     }
-    async getStreamingLink(anilistId:number,episodeSlug :string) {
+    async getStreamingLink(anilistId:number,episodeSlug :string) : Promise<string> {
         const filter = {
             $and : [
                 {episodeSlug : episodeSlug},
                 {anilistId : anilistId}
             ]
          }
-          const [url] = await this.episodeModel.find(filter).select("url")
-        return url
+          const [episode] = await this.episodeModel.find(filter).select("url").lean().exec();
+         return episode?.url;
     }
 }
