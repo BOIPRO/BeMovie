@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schema/user.schema';
 import { Model } from 'mongoose';
@@ -13,7 +13,7 @@ export class AuthService {
         private userModel: Model<User>,
         @Inject(RESEND_CLIENT) private readonly resend: Resend
     ) { }
-    private async sendVerificationEmail(to: string, code: string) {
+    private async sendVerificationEmail(to: string, code: string) : Promise<void> {
         try {
             await this.resend.emails.send({
                 from: 'onboarding@resend.dev', // Domain đã verify trên Resend
@@ -55,7 +55,7 @@ export class AuthService {
         )
         await this.sendVerificationEmail(email, otp)
     }
-    private async checkUsernameUnique(username: string) {
+    private async checkUsernameUnique(username: string) : Promise<void> {
         const exists = await this.userModel.findOne({ username }).exec();
         if (exists) throw new ConflictException("Username nay da ton tai");
     }

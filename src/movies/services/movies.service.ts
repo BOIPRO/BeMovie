@@ -9,9 +9,9 @@ export class MoviesService {
     private readonly redisService: RedisService,
     @InjectModel(Movie.name)
     private movieModel: Model<Movie>
-  ) {}
+  ) { }
 
-  async getTrendingAnimes(key: string, limit: number) {
+  async getTrendingAnimes(key: string, limit: number): Promise<Partial<Movie>[]> {
     const dataTrending = await this.redisService.get(key);
     if (dataTrending) {
       return dataTrending;
@@ -23,14 +23,17 @@ export class MoviesService {
       return data
     }
   }
-  async findOneAnime(id : number) {
-      const data = await this.movieModel.find({ anilistId: id}).select('titleRomaji titleEnglish coverImage description averageScore genres ')
+  async findOneAnime(id: number): Promise<Partial<Movie>[]> {
+    const data = await this.movieModel.find({ anilistId: id }).select('titleRomaji titleEnglish coverImage description averageScore genres ')
     if (!data) {
-    throw new NotFoundException("Cant find anime");
+      throw new NotFoundException("Cant find anime");
+    }
+    return data
   }
-  return data 
-  }
-  async getPageAnimes(key: string, page: number, limit: number) {
+  async getPageAnimes(key: string, page: number, limit: number) : Promise<{
+    media: any[];
+    totalPages: number;
+  }> {
     const data = await this.redisService.get(key);
     if (data) {
       return data;
@@ -43,10 +46,13 @@ export class MoviesService {
     }
   }
 
-  async getPage(page: number = 1, limit: number = 30) {
-    const skip = (page - 1) * limit 
-    const filter = {isPublished : true};
-    const [data,totalDocuments] = await Promise.all([
+  async getPage(page: number = 1, limit: number = 30): Promise<{
+    media: any[];
+    totalPages: number;
+  }> {
+    const skip = (page - 1) * limit
+    const filter = { isPublished: true };
+    const [data, totalDocuments] = await Promise.all([
       this.movieModel
         .find(filter)
         .sort({ lastChecked: -1 })
@@ -60,12 +66,15 @@ export class MoviesService {
     const effectiveTotal = Math.max(0, totalDocuments);
     const totalPages = Math.ceil(effectiveTotal / limit);
     return {
-      media : data,
-      totalPages : totalPages
+      media: data,
+      totalPages: totalPages
     }
   }
 
-  async searchAnime(search?: string, page: number = 1, limit: number = 30) {
+  async searchAnime(search?: string, page: number = 1, limit: number = 30) : Promise<{
+    media: any[];
+    totalPages: number;
+  }>{
     const skip = (page - 1) * limit;
     const result = await
       this.movieModel.aggregate([
@@ -74,7 +83,7 @@ export class MoviesService {
             index: "default",
             text: {
               query: search,
-              path: ["titleRomaji","titleEnglish"]
+              path: ["titleRomaji", "titleEnglish"]
             },
           }
         },
@@ -92,13 +101,13 @@ export class MoviesService {
           }
         }
       ])
-  const data = result[0]?.data || [];
-  const totalDocuments = result[0]?.meta[0]?.total || 0;
-  const totalPages = Math.ceil(totalDocuments / limit);
-   return {
-    media : data,
-    totalPages : totalPages
-   }
+    const data = result[0]?.data || [];
+    const totalDocuments = result[0]?.meta[0]?.total || 0;
+    const totalPages = Math.ceil(totalDocuments / limit);
+    return {
+      media: data,
+      totalPages: totalPages
+    }
   }
 
 }
