@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, Query,ValidationPipe  } from '@nestjs/common';
+import { Controller, Get, ParseIntPipe, Query,ValidationPipe  } from '@nestjs/common';
 import { MoviesService } from './services/movies.service';
 import { BotService } from './services/bot.sync.service';
 import { GetAnime } from '../common/dto/get-anime.dto';
