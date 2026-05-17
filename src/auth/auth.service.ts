@@ -15,9 +15,9 @@ export class AuthService {
         private userModel: Model<User>,
         @Inject(RESEND_CLIENT) private readonly resend: Resend,
         private jwtService: JwtService,
-        private readonly redisService : RedisService
+        private readonly redisService: RedisService
     ) { }
-    private async sendVerificationEmail(to: string, code: string) : Promise<void> {
+    private async sendVerificationEmail(to: string, code: string): Promise<void> {
         try {
             await this.resend.emails.send({
                 from: 'onboarding@resend.dev', // Domain đã verify trên Resend
@@ -50,16 +50,15 @@ export class AuthService {
             {
                 $set: {
                     username: username,
-                    verifyOTP: otpHash,
-                    expireOTP: new Date(Date.now() + 3 * 60 * 1000),
                     password: hashPassword,
                 }
             },
             { upsert: true }
         )
+        await this.redisService.set(`otp:${email}`, JSON.stringify({ otpHash }), 3 * 60)
         await this.sendVerificationEmail(email, otp)
     }
-    private async checkUsernameUnique(username: string) : Promise<void> {
+    private async checkUsernameUnique(username: string): Promise<void> {
         const exists = await this.userModel.findOne({ username }).exec();
         if (exists) throw new ConflictException("Username nay da ton tai");
     }
@@ -80,106 +79,92 @@ export class AuthService {
             await this.updateUserToDB(email, username, password)
     }
     async VerifyEmail(email: string, otp: string): Promise<void> {
-        const user = await this.userModel.findOne({ email: email }).select('verifyOTP expireOTP')
-        if (user) {
-            if (new Date() > user.expireOTP) {
-                throw new BadRequestException("Ma xac thuc da het han vui long gui lai")
-            }
-            const check = crypto.createHash('sha256').update(otp).digest('hex') === user.verifyOTP;
-            if (check) {
-                await this.userModel.updateOne(
-                    { email: email },
-                    {
-                        $set: {
-                            isVerify: true
-                        },
-                        $unset:{
-                            expireAt : ""
-                        }
+        const {otpHash} = await this.redisService.get(`otp:${email}`)
+        if (!otpHash) {
+            throw new BadRequestException("Ma xac thuc khong dung")
+        }
+        const check = crypto.createHash('sha256').update(otp).digest('hex') === otpHash;
+        if (check) {
+            await this.userModel.updateOne(
+                { email: email },
+                {
+                    $set: {
+                        isVerify: true
                     },
-                )
-            }
-            else
-                throw new BadRequestException("Ma OTP khong chinh xac")
+                    $unset: {
+                        expireAt: ""
+                    }
+                },
+            )
         }
-        else {
-            // Khong tim thay email
-            throw new UnauthorizedException('Ma xac thuc khong dung')
-        }
-    }
-    async resendCode (email: string) : Promise<void> {
-        const user =  await this.userModel.findOne({email:email})
+        else
+            throw new BadRequestException("Ma OTP khong chinh xac")
+}
+
+    async resendCode(email: string) : Promise < void> {
+    const user = await this.userModel.findOne({ email: email })
         if(user) {
         const otp = this.createOTP();
         const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
-        await this.userModel.updateOne(
-            { email: email },
-            {
-                $set: {
-                    verifyOTP: otpHash,
-                    expireOTP: new Date(Date.now() + 3 * 60 * 1000),
-                }
-            },
-            { upsert: true }
-        )
+        await this.redisService.set(`otp:${email}`, JSON.stringify({ otpHash }), 3 * 60)
         await this.sendVerificationEmail(email, otp)
-        }
+    }
         else {
-            throw new BadRequestException("Co loi xay ra")
-        }
+        throw new BadRequestException("Co loi xay ra")
     }
-    async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string}> {
-        const user = await this.userModel.findOne({ username }).select('password isVerify').exec();
-        if (!user) {
-            throw new UnauthorizedException('Username hoac mat khau khong dung');
-        }
-        if (!user.isVerify) {
-            throw new UnauthorizedException('Tai khoan chua xac thuc email');
-        }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            throw new UnauthorizedException('Username hoac mat khau khong dung');
-        }
-        const accessToken = this.jwtService.sign(
-            { id: user._id, username: user.username},
-            { expiresIn: '15m' }
-        );
-        const refreshToken = this.jwtService.sign(
-            { id: user._id, username: user.username },
-            { expiresIn: '7d' }
-        );
-        const refreshTokenExpireAt = 7 * 24 * 60 * 60
-        await this.redisService.set(`refreshToken:${user._id}`, JSON.stringify({ refreshToken }), refreshTokenExpireAt);
-        return {
-            accessToken,
-            refreshToken
-        };
+}
+    async login(username: string, password: string): Promise < { accessToken: string; refreshToken: string } > {
+    const user = await this.userModel.findOne({ username }).select('password isVerify').exec();
+    if(!user) {
+        throw new UnauthorizedException('Username hoac mat khau khong dung');
     }
-    async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
-        try {
-            const decoded = this.jwtService.verify(refreshToken);
-           const user = await this.redisService.get(`refreshToken:${decoded.id}`);
-            if (!user || user.refreshToken !== refreshToken) {
-                throw new UnauthorizedException('Refresh token khong hop le');
-            }
-            const accessToken = this.jwtService.sign(
-                { id: user._id, username: user.username },
-                { expiresIn: '15m' }
-            );
-            return { accessToken };
+        if(!user.isVerify) {
+    throw new UnauthorizedException('Tai khoan chua xac thuc email');
+}
+const isPasswordValid = await bcrypt.compare(password, user.password);
+if (!isPasswordValid) {
+    throw new UnauthorizedException('Username hoac mat khau khong dung');
+}
+const accessToken = this.jwtService.sign(
+    { id: user._id, username: user.username },
+    { expiresIn: '15m' }
+);
+const refreshToken = this.jwtService.sign(
+    { id: user._id, username: user.username },
+    { expiresIn: '7d' }
+);
+const refreshTokenExpireAt = 7 * 24 * 60 * 60
+await this.redisService.set(`refreshToken:${user._id}`, JSON.stringify({ refreshToken }), refreshTokenExpireAt);
+return {
+    accessToken,
+    refreshToken
+};
+    }
+    async refreshAccessToken(refreshToken: string): Promise < { accessToken: string } > {
+    try {
+        const decoded = this.jwtService.verify(refreshToken);
+        const user = await this.redisService.get(`refreshToken:${decoded.id}`);
+        if(!user || user.refreshToken !== refreshToken) {
+    throw new UnauthorizedException('Refresh token khong hop le');
+}
+const accessToken = this.jwtService.sign(
+    { id: user._id, username: user.username },
+    { expiresIn: '15m' }
+);
+return { accessToken };
         } catch (error) {
-            throw new UnauthorizedException('Refresh token khong hop le');
-        }
+    throw new UnauthorizedException('Refresh token khong hop le');
+}
     }
-    async logout(userId: string): Promise<void> {
-        await this.userModel.updateOne(
-            { _id: userId },
-            {
-                $unset: {
-                    refreshToken: "",
-                    refreshTokenExpireAt: "",
-                }
+    async logout(userId: string): Promise < void> {
+    await this.userModel.updateOne(
+        { _id: userId },
+        {
+            $unset: {
+                refreshToken: "",
+                refreshTokenExpireAt: "",
             }
-        );
-    }
+        }
+    );
+}
 }
