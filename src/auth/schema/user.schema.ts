@@ -10,14 +10,6 @@ export class User {
     @Prop({ default: false })
     isVerify !: boolean
     @Prop()
-    verifyOTP!: string
-    @Prop()
-    expireOTP! : Date
-    @Prop({
-        expires: 0,
-        default: () =>
-            new Date(Date.now() + 24 * 60 * 60 * 1000),
-    })
     expireAt!: Date
 
 }
