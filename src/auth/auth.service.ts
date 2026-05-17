@@ -6,12 +6,16 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { RESEND_CLIENT } from 'src/common/resend.provider';
 import { Resend } from 'resend';
+import { JwtService } from '@nestjs/jwt';
+import { RedisService } from 'src/common/redis/redis.service';
 @Injectable()
 export class AuthService {
     constructor(
         @InjectModel(User.name)
         private userModel: Model<User>,
-        @Inject(RESEND_CLIENT) private readonly resend: Resend
+        @Inject(RESEND_CLIENT) private readonly resend: Resend,
+        private jwtService: JwtService,
+        private readonly redisService : RedisService
     ) { }
     private async sendVerificationEmail(to: string, code: string) : Promise<void> {
         try {
@@ -123,5 +127,59 @@ export class AuthService {
         else {
             throw new BadRequestException("Co loi xay ra")
         }
+    }
+    async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string}> {
+        const user = await this.userModel.findOne({ username }).select('password isVerify').exec();
+        if (!user) {
+            throw new UnauthorizedException('Username hoac mat khau khong dung');
+        }
+        if (!user.isVerify) {
+            throw new UnauthorizedException('Tai khoan chua xac thuc email');
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw new UnauthorizedException('Username hoac mat khau khong dung');
+        }
+        const accessToken = this.jwtService.sign(
+            { id: user._id, username: user.username},
+            { expiresIn: '15m' }
+        );
+        const refreshToken = this.jwtService.sign(
+            { id: user._id, username: user.username },
+            { expiresIn: '7d' }
+        );
+        const refreshTokenExpireAt = 7 * 24 * 60 * 60
+        await this.redisService.set(`refreshToken:${user._id}`, JSON.stringify({ refreshToken }), refreshTokenExpireAt);
+        return {
+            accessToken,
+            refreshToken
+        };
+    }
+    async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+        try {
+            const decoded = this.jwtService.verify(refreshToken);
+           const user = await this.redisService.get(`refreshToken:${decoded.id}`);
+            if (!user || user.refreshToken !== refreshToken) {
+                throw new UnauthorizedException('Refresh token khong hop le');
+            }
+            const accessToken = this.jwtService.sign(
+                { id: user._id, username: user.username },
+                { expiresIn: '15m' }
+            );
+            return { accessToken };
+        } catch (error) {
+            throw new UnauthorizedException('Refresh token khong hop le');
+        }
+    }
+    async logout(userId: string): Promise<void> {
+        await this.userModel.updateOne(
+            { _id: userId },
+            {
+                $unset: {
+                    refreshToken: "",
+                    refreshTokenExpireAt: "",
+                }
+            }
+        );
     }
 }

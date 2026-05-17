@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document,InferSchemaType } from 'mongoose';
 @Schema({ _id: false }) 
 class NextAiringEpisode {
   @Prop({ type: Number })
@@ -52,5 +52,5 @@ export class Movie extends Document {
 }
 
 export const MovieSchema = SchemaFactory.createForClass(Movie);
-
 MovieSchema.index({ titleRomaji: 'text', titleEnglish: 'text' });
+export type Movies = InferSchemaType<typeof MovieSchema>;

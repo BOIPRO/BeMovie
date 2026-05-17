@@ -10,10 +10,6 @@ export class User {
     @Prop({ default: false })
     isVerify !: boolean
     @Prop()
-    refreshToken !: string;
-    @Prop()
-    refreshTokenExpireAt!: Date
-    @Prop()
     verifyOTP!: string
     @Prop()
     expireOTP! : Date
