@@ -79,7 +79,7 @@ export class AuthService {
             await this.updateUserToDB(email, username, password)
     }
     async VerifyEmail(email: string, otp: string): Promise<void> {
-        const {otpHash} = await this.redisService.get(`otp:${email}`)
+        const { otpHash } = await this.redisService.get(`otp:${email}`)
         if (!otpHash) {
             throw new BadRequestException("Ma xac thuc khong dung")
         }
@@ -99,72 +99,64 @@ export class AuthService {
         }
         else
             throw new BadRequestException("Ma OTP khong chinh xac")
-}
+    }
 
-    async resendCode(email: string) : Promise < void> {
-    const user = await this.userModel.findOne({ email: email })
-        if(user) {
-        const otp = this.createOTP();
-        const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
-        await this.redisService.set(`otp:${email}`, JSON.stringify({ otpHash }), 3 * 60)
-        await this.sendVerificationEmail(email, otp)
-    }
-        else {
-        throw new BadRequestException("Co loi xay ra")
-    }
-}
-    async login(username: string, password: string): Promise < { accessToken: string; refreshToken: string } > {
-    const user = await this.userModel.findOne({ username }).select('password isVerify').exec();
-    if(!user) {
-        throw new UnauthorizedException('Username hoac mat khau khong dung');
-    }
-        if(!user.isVerify) {
-    throw new UnauthorizedException('Tai khoan chua xac thuc email');
-}
-const isPasswordValid = await bcrypt.compare(password, user.password);
-if (!isPasswordValid) {
-    throw new UnauthorizedException('Username hoac mat khau khong dung');
-}
-const accessToken = this.jwtService.sign(
-    { id: user._id, username: user.username },
-    { expiresIn: '15m' }
-);
-const refreshToken = this.jwtService.sign(
-    { id: user._id, username: user.username },
-    { expiresIn: '7d' }
-);
-const refreshTokenExpireAt = 7 * 24 * 60 * 60
-await this.redisService.set(`refreshToken:${user._id}`, JSON.stringify({ refreshToken }), refreshTokenExpireAt);
-return {
-    accessToken,
-    refreshToken
-};
-    }
-    async refreshAccessToken(refreshToken: string): Promise < { accessToken: string } > {
-    try {
-        const decoded = this.jwtService.verify(refreshToken);
-        const user = await this.redisService.get(`refreshToken:${decoded.id}`);
-        if(!user || user.refreshToken !== refreshToken) {
-    throw new UnauthorizedException('Refresh token khong hop le');
-}
-const accessToken = this.jwtService.sign(
-    { id: user._id, username: user.username },
-    { expiresIn: '15m' }
-);
-return { accessToken };
-        } catch (error) {
-    throw new UnauthorizedException('Refresh token khong hop le');
-}
-    }
-    async logout(userId: string): Promise < void> {
-    await this.userModel.updateOne(
-        { _id: userId },
-        {
-            $unset: {
-                refreshToken: "",
-                refreshTokenExpireAt: "",
-            }
+    async resendCode(email: string): Promise<void> {
+        const user = await this.userModel.findOne({ email: email })
+        if (user) {
+            const otp = this.createOTP();
+            const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+            await this.redisService.set(`otp:${email}`, JSON.stringify({ otpHash }), 3 * 60)
+            await this.sendVerificationEmail(email, otp)
         }
-    );
-}
+        else {
+            throw new BadRequestException("Co loi xay ra")
+        }
+    }
+    async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string  }> {
+        const user = await this.userModel.findOne({ username }).select('username password isVerify').exec();
+        if (!user) {
+            throw new UnauthorizedException('Username hoac mat khau khong dung');
+        }
+        if (!user.isVerify) {
+            throw new UnauthorizedException('Tai khoan chua xac thuc email');
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw new UnauthorizedException('Username hoac mat khau khong dung');
+        }
+        const accessToken = this.jwtService.sign(
+            { id: user._id, username: user.username },
+            { expiresIn: '15m' }
+        );
+        const refreshToken = this.jwtService.sign(
+            { id: user._id, username: user.username },
+            { expiresIn: '7d' }
+        );
+        const refreshTokenExpireAt = 7 * 24 * 60 * 60
+        await this.redisService.set(`refreshToken:${user._id}`, JSON.stringify({ refreshToken }), refreshTokenExpireAt);
+        return {
+            accessToken,
+            refreshToken,
+        };
+    }
+    async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+        try {
+            const decoded = this.jwtService.verify(refreshToken);
+            const user = await this.redisService.get(`refreshToken:${decoded.id}`);
+            if (!user || user.refreshToken !== refreshToken) {
+                throw new UnauthorizedException('Refresh token khong hop le');
+            }
+            const accessToken = this.jwtService.sign(
+                { id: user._id, username: user.username },
+                { expiresIn: '15m' }
+            );
+            return { accessToken };
+        } catch (error) {
+            throw new UnauthorizedException('Refresh token khong hop le');
+        }
+    }
+    async logout(userId: string): Promise<void> {
+       
+    }
 }
