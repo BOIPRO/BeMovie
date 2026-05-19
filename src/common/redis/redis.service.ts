@@ -22,4 +22,11 @@ export class RedisService {
            return null;
         }
     }
+    async del(key: string) {
+        try {
+            await this.redis.del(key);
+        } catch (error) {
+           console.error(`[Redis Error] delete key ${key} failed:`, error);
+        }
+    }
 }
