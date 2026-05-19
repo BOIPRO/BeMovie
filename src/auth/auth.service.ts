@@ -113,7 +113,7 @@ export class AuthService {
             throw new BadRequestException("Co loi xay ra")
         }
     }
-    async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string  }> {
+    async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
         const user = await this.userModel.findOne({ username }).select('username password isVerify').exec();
         if (!user) {
             throw new UnauthorizedException('Username hoac mat khau khong dung');
@@ -156,7 +156,12 @@ export class AuthService {
             throw new UnauthorizedException('Refresh token khong hop le');
         }
     }
-    async logout(userId: string): Promise<void> {
-       
+    async logout(refreshToken: string): Promise<void> {
+        try {
+            const decoded = this.jwtService.verify(refreshToken);
+            await this.redisService.del(`refreshToken:${decoded.id}`);
+        } catch (error) {
+            throw new UnauthorizedException('Refresh token khong hop le');
+        }
     }
 }

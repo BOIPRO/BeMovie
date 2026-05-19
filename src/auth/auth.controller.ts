@@ -5,7 +5,6 @@ import { VerifyEmail } from 'src/common/dto/verify.dto';
 import { ResendDto } from 'src/common/dto/resend.dto';
 import { LoginDto } from 'src/common/dto/login.dto';
 import { type Response, type Request } from 'express';
-import { use } from 'passport';
 @Controller('auth')
 export class AuthController {
     constructor(
@@ -54,12 +53,14 @@ export class AuthController {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
+            path: '/',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
         response.cookie('accessToken', result.accessToken, {
             httpOnly: true, 
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
+            path: '/',
             maxAge: 15 * 60 * 1000 
         });
     }
@@ -74,27 +75,25 @@ export class AuthController {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
+            path: '/',
             maxAge: 15 * 60 * 1000
         });
     }
-    // @Post('logout')
-    // async logout(@Request() req: Request) {
-    //     const userId = req.user?.id;
-    //     if (!userId) {
-    //         return new Response(
-    //             JSON.stringify({ message: 'User not authenticated' }),
-    //             { status: 401, headers: { 'Content-Type': 'application/json' } }
-    //         );
-    //     }
-    //     await this.authService.logout(userId);
-    //     return new Response(
-    //         JSON.stringify({ message: 'ok' }),
-    //         {
-    //             headers: {
-    //                 'Content-Type': 'application/json'
-    //             }
-    //         }
-    //     );
-    // }
+    @Post('logout')
+    async logout(@Res({passthrough : true}) response: Response) {
+        await this.authService.logout(response.req.cookies['refreshToken']);
+        response.clearCookie('refreshToken', {
+            httpOnly: true, 
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        });
+        response.clearCookie('accessToken',{
+            httpOnly: true, 
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        });
+    }
 
 }
