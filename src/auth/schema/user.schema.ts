@@ -9,8 +9,11 @@ export class User {
     password!: string;
     @Prop({ default: false })
     isVerify !: boolean
-    @Prop()
+    @Prop({
+        expires: 0,
+        default: () =>
+            new Date(Date.now() + 24 * 60 * 60 * 1000),
+    })
     expireAt!: Date
-
 }
 export const UserSchema = SchemaFactory.createForClass(User);
