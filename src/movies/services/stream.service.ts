@@ -36,4 +36,17 @@ export class StreamService {
           const [episode] = await this.episodeModel.find(filter).select("url").lean().exec();
          return episode?.url;
     }
+    async changeURL () {
+        await this.episodeModel.collection.updateMany(
+  { url: { $exists: true } }, // Điều kiện: Tìm những document có field url
+  [
+    {
+      $set: {
+        url: { $last: { $split: [ "$url", "/" ] } }
+      }
+    }
+  ]
+)
+    }
+
 }

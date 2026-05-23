@@ -16,7 +16,7 @@ export class AuthService {
         @Inject(RESEND_CLIENT) private readonly resend: Resend,
         private jwtService: JwtService,
         private readonly redisService: RedisService
-    ) { }
+    ) {}
     private async sendVerificationEmail(to: string, code: string): Promise<void> {
         try {
             await this.resend.emails.send({

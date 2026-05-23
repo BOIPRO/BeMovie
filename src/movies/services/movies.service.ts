@@ -55,7 +55,7 @@ export class MoviesService {
     const [data, totalDocuments] = await Promise.all([
       this.movieModel
         .find(filter)
-        .sort({ lastChecked: -1 })
+        .sort({ popularity: -1 })
         .skip(skip)
         .limit(limit)
         .select('slug titleRomaji idMal titleEnglish coverImage description')

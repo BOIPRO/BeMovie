@@ -41,12 +41,12 @@ export class MoviesController {
         return {url : url}
     }
 }
-@Controller('crawl')
-export class CrawlController {
-    constructor ( private movieSyncService : BotService ) {}
+@Controller('changeurl')
+export class ChangeUrlController {
+    constructor ( private streamService : StreamService ) {}
     @Get()
-    async CrawlAnime() {
-        await this.movieSyncService.runTask();
+    async ChangeUrl() {
+        await this.streamService.changeURL();
         return "Success"
     }
 }
