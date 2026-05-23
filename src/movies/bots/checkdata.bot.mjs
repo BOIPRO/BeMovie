@@ -13,6 +13,12 @@ const generateSlug = (episode) => {
     .replace(/[^a-z0-9-]/g, '');
   return `tap-${cleanEpisode}`;
 };
+const getIdFromUrl = (url) => {
+  if (!url) return '';
+
+  // Cắt chuỗi theo dấu "/" và lấy phần tử cuối cùng
+  return url.split('/').pop() || '';
+};
 // fetch Animapper t get episode
 const getEpisodeAnime = async (anime) => {
   try {
@@ -20,7 +26,7 @@ const getEpisodeAnime = async (anime) => {
     const res = await axios.get(`https://api.animapper.net/api/v1/stream/episodes?id=${anime.anilistId}&provider=ANIMEVIETSUB`)
     const infoEpisode = await res.data;
     return infoEpisode.episodes
-  } 
+  }
   catch (error) {
     const status = error.response?.status;
     if (status >= 500) {
@@ -31,11 +37,11 @@ const getEpisodeAnime = async (anime) => {
   }
 }
 // fetch Animapper t get link embed
-const getLinkEpisode = async (id,listEpisode) => {
+const getLinkEpisode = async (id, listEpisode) => {
   const finalResults = [];
   let ErrorCount = 0
-  const numberEpisodeSaved = await epsiodes.countDocuments({anilistId : id})
-  for (let i = numberEpisodeSaved; i < listEpisode.length;i++) {
+  const numberEpisodeSaved = await epsiodes.countDocuments({ anilistId: id })
+  for (let i = numberEpisodeSaved; i < listEpisode.length; i++) {
     try {
       const res = await axios.get(
         `https://api.animapper.net/api/v1/stream/source?episodeData=${listEpisode[i].episodeId}&provider=ANIMEVIETSUB&server=HDX`
@@ -43,22 +49,16 @@ const getLinkEpisode = async (id,listEpisode) => {
       if (res.data && res.data.url) {
         finalResults.push({
           ...listEpisode[i],
-          url: res.data.url,
+          url: getIdFromUrl(res.data.url),
         });
       }
     } catch (error) {
       const status = error.response?.status;
       console.log(listEpisode[i])
       if (status >= 500) {
-        ErrorCount++;
-        if (ErrorCount >5) {
-            console.error(`Server Animapper dropdown streaming link ${status}`);
-            return null
-        }
+        console.warn(`Bỏ qua tập ${listEpisode[i].episodeId} do lỗi: ${status || 'Network'}`);
+        continue;
       }
-
-      console.warn(`Bỏ qua tập ${listEpisode[i].episodeId} do lỗi: ${status || 'Network'}`);
-      continue;
     }
     await sleep(1500)
   }
@@ -86,46 +86,46 @@ const saveEpisodeToDB = async (id, episodeResults) => {
     }
   })
   try {
-    await epsiodes.bulkWrite(operations, { ordered: false }); 
+    await epsiodes.bulkWrite(operations, { ordered: false });
   } catch (error) {
     console.log("Khong co tap moi bo qua")
   }
 }
-const saveErrorAnime = async(anime) => {
+const saveErrorAnime = async (anime) => {
   const result = await movies.updateOne(
-          { anilistId: anime.anilistId },
-          {
-            $inc: { checkAttempts: 1 },
-            $set: { lastChecked: new Date() }
-          },
-          { upsert: true }
-        )
-        console.log(result);
+    { anilistId: anime.anilistId },
+    {
+      $inc: { checkAttempts: 1 },
+      $set: { lastChecked: new Date() }
+    },
+    { upsert: true }
+  )
+  console.log(result);
 }
-const saveReleasingAnime = async(anime) => {
-   await movies.updateOne(
-          { anilistId: anime.anilistId },
-          {
-            $set: {
-              lastChecked: new Date(),
-              isPublished: true
-            }
-          },
-          { upsert: true }
-        )
+const saveReleasingAnime = async (anime) => {
+  await movies.updateOne(
+    { anilistId: anime.anilistId },
+    {
+      $set: {
+        lastChecked: new Date(),
+        isPublished: true
+      }
+    },
+    { upsert: true }
+  )
 }
-const saveFinishedAnime = async(anime) => {
-          await movies.updateOne(
-          { anilistId: anime.anilistId },
-          {
-            $set: {
-              lastChecked: new Date(),
-              isPublished: true,
-              isComplete: true
-            }
-          },
-          { upsert: true }
-        )
+const saveFinishedAnime = async (anime) => {
+  await movies.updateOne(
+    { anilistId: anime.anilistId },
+    {
+      $set: {
+        lastChecked: new Date(),
+        isPublished: true,
+        isComplete: true
+      }
+    },
+    { upsert: true }
+  )
 }
 // bot Work
 const botCheckAnime = async () => {
@@ -153,8 +153,8 @@ const botCheckAnime = async () => {
         }
       ]
     })
-    .sort({trending : -1 })
-    .select("anilistId titleRomaji episodes status nextAiringEpisode trending")
+      .sort({ trending: -1 })
+      .select("anilistId titleRomaji episodes status nextAiringEpisode trending")
     for (const anime of data) {
       console.log(`Dang kiem tra anime ${anime.titleRomaji} `)
       const totalEpisode = anime.episodes ? anime.episodes : anime.nextAiringEpisode.episode - 1
@@ -164,23 +164,23 @@ const botCheckAnime = async () => {
         await saveErrorAnime(anime)
       }
       else if (listEpsiode.length < totalEpisode) {
-        const episodeResults = await getLinkEpisode(anime.anilistId,listEpsiode);
-        if(!episodeResults) continue;
-        await saveEpisodeToDB(anime.anilistId,episodeResults)
+        const episodeResults = await getLinkEpisode(anime.anilistId, listEpsiode);
+        if (episodeResults.length === 0) continue;
+        await saveEpisodeToDB(anime.anilistId, episodeResults)
         await saveReleasingAnime(anime)
       }
       else {
-        const episodeResults = await getLinkEpisode(anime.anilistId,listEpsiode);
-        if(!episodeResults) {
+        const episodeResults = await getLinkEpisode(anime.anilistId, listEpsiode);
+        if (episodeResults.length === 0) {
           continue
         };
-        await saveEpisodeToDB(anime.anilistId,episodeResults)
+        await saveEpisodeToDB(anime.anilistId, episodeResults)
         if (anime.status === "FINISHED") {
-             console.log("Bo nay da ket thuc")
-             await saveFinishedAnime(anime)
+          console.log("Bo nay da ket thuc")
+          await saveFinishedAnime(anime)
         }
-        else if (anime.status === "RELEASING" ) {
-           console.log("Bo nay chua ketthuc ket thuc")
+        else if (anime.status === "RELEASING") {
+          console.log("Bo nay chua ketthuc ket thuc")
           await saveReleasingAnime(anime)
         }
       }
