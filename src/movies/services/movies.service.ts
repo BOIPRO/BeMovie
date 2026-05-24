@@ -80,7 +80,7 @@ export class MoviesService {
       this.movieModel.aggregate([
         {
           $search: {
-            index: "default",
+            index: "searchAnime",
             text: {
               query: search,
               path: ["titleRomaji", "titleEnglish"]
