@@ -30,7 +30,7 @@ export class MoviesService {
     }
     return data
   }
-  async getPageAnimes(key: string, page: number, limit: number) : Promise<{
+  async getPageAnimes(key: string, page: number, limit: number): Promise<{
     media: any[];
     totalPages: number;
   }> {
@@ -71,20 +71,46 @@ export class MoviesService {
     }
   }
 
-  async searchAnime(search?: string, page: number = 1, limit: number = 30) : Promise<{
+  async searchAnime(search?: string, page: number = 1, limit: number = 30): Promise<{
     media: any[];
     totalPages: number;
-  }>{
+  }> {
     const skip = (page - 1) * limit;
     const result = await
       this.movieModel.aggregate([
         {
           $search: {
             index: "searchAnime",
-            text: {
-              query: search,
-              path: ["titleRomaji", "titleEnglish"]
-            },
+            compound: {
+              must: [
+                {
+                  autocomplete: {
+                    query: search,
+                    path: "titleRomaji",
+                    fuzzy: {
+                      maxEdits: 1
+                    }
+                  }
+                },
+                {
+                  autocomplete: {
+                    query: search,
+                    path: "titleEnglish",
+                    fuzzy: {
+                      maxEdits: 1
+                    }
+                  }
+                }
+              ],
+              filter: [
+                {
+                  equals: {
+                    path: "isPublished",
+                    value: true
+                  }
+                }
+              ]
+            }
           }
         },
         {
