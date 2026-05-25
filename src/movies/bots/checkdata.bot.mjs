@@ -15,8 +15,6 @@ const generateSlug = (episode) => {
 };
 const getIdFromUrl = (url) => {
   if (!url) return '';
-
-  // Cắt chuỗi theo dấu "/" và lấy phần tử cuối cùng
   return url.split('/').pop() || '';
 };
 // fetch Animapper t get episode
