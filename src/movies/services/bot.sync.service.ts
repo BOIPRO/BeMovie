@@ -1,6 +1,5 @@
 // Crawl data fro Anilist
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
-import { Cron, CronExpression } from '@nestjs/schedule';
 import Piscina from 'piscina';
 import {PATHS} from 'src/shared/path.config'
 @Injectable()
@@ -13,7 +12,6 @@ export class BotService implements OnModuleDestroy {
             maxThreads: 1,
         });
     }
-    @Cron(CronExpression.EVERY_DAY_AT_4PM)
     async runTask() {
         try {
             const config = {
