@@ -2,14 +2,13 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Cron, CronExpression } from '@nestjs/schedule';
 import Piscina from 'piscina';
-import * as path from 'path';
 import {PATHS} from 'src/shared/path.config'
 @Injectable()
 export class BotService implements OnModuleDestroy {
     private piscina: Piscina;
     constructor() {
         this.piscina = new Piscina({
-            filename: PATHS.BOT_WORKER_DEV,
+            filename: PATHS.BOT_WORKER_PRODUCT,
             minThreads: 1,
             maxThreads: 1,
         });
