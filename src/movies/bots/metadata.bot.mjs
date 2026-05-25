@@ -104,7 +104,7 @@ const CrawlMovie = async (Movies) => {
 
             hasNextPage = pageInfo.hasNextPage;
             currentPage++;
-            await sleep(2000);
+            await sleep(3000);
 
         } catch (error) {
             console.error(`Error at page ${currentPage}: ${error.message}`);
