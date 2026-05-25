@@ -12,7 +12,7 @@ export class BotService implements OnModuleDestroy {
             maxThreads: 1,
         });
     }
-    async runTask() {
+    async getMetadata() {
         try {
             const config = {
                 dbUrl: process.env.MONGOOSE_URI,

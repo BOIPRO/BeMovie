@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import {  ChangeUrlController, MoviesController } from './movies.controller';
+import {  CronJobController, MoviesController } from './movies.controller';
 import { MoviesService } from './services/movies.service';
 import { HttpModule } from '@nestjs/axios';
 import { BotService } from './services/bot.sync.service';
@@ -14,7 +14,7 @@ import { Episode, EpsiodeSchema } from './schema/episode.schema';
       {name : Episode.name, schema : EpsiodeSchema}
     ]),
   ],
-  controllers: [MoviesController,ChangeUrlController],
+  controllers: [MoviesController,CronJobController],
   providers: [MoviesService,BotService,StreamService]
 })
 export class MoviesModule {}

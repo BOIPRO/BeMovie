@@ -41,12 +41,12 @@ export class MoviesController {
         return {url : url}
     }
 }
-@Controller('changeurl')
-export class ChangeUrlController {
-    constructor ( private streamService : StreamService ) {}
-    @Get()
-    async ChangeUrl() {
-        await this.streamService.changeURL();
+@Controller('cronjob')
+export class CronJobController {
+    constructor ( private botService : BotService ) {}
+    @Get('metadata')
+    async GetMetadata() {
+        await this.botService.getMetadata();
         return "Success"
     }
 }
