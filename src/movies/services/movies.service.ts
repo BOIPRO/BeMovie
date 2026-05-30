@@ -18,7 +18,7 @@ export class MoviesService {
     }
     else {
       const expiretime = 300
-      const data = await this.movieModel.find().sort({ trending: -1 }).select('slug idMal titleRomaji titleEnglish coverImage description').limit(limit).lean().exec()
+      const data = await this.movieModel.find({isPublished : true}).sort({ trending: -1}).select('slug idMal titleRomaji titleEnglish coverImage description').limit(limit).lean().exec()
       await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
     }
@@ -135,5 +135,7 @@ export class MoviesService {
       totalPages: totalPages
     }
   }
+  async clearData() {
 
+  }
 }

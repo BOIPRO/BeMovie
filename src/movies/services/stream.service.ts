@@ -17,10 +17,10 @@ export interface EpisodeAnime {
 @Injectable()
 export class StreamService {
     constructor(
-        private readonly redisService: RedisService,
         @InjectModel(Episode.name)
         private episodeModel: Model<Episode>,
-        private configService: ConfigService
+        @InjectModel(Movie.name)
+        private movieModel: Model<Movie>,
     ) {}
     async getAnimeEpisodes(id: number) : Promise<EpisodeAnime[]> {
         const listEpsiode: EpisodeAnime[] = await this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber server")
@@ -36,17 +36,21 @@ export class StreamService {
           const [episode] = await this.episodeModel.find(filter).select("url").lean().exec();
          return episode?.url;
     }
-    async changeURL () {
-        await this.episodeModel.collection.updateMany(
-  { url: { $exists: true } }, // Điều kiện: Tìm những document có field url
-  [
-    {
-      $set: {
-        url: { $last: { $split: [ "$url", "/" ] } }
+    async fixAnimeURL () {
+      const data = await this.movieModel.find({isPublished : true}).select("anilistId");
+      for (const anime of data) {
+        const anilistId = anime.anilistId;
+        const filter = { anilistId: anilistId };
+        const episodes = await this.episodeModel.find(filter).select("url");
+        if (episodes.length == 0) {
+            await this.movieModel.updateOne(
+                { anilistId: anilistId }, 
+                { isPublished: false }),
+                {$unset : {
+                    iscomplete : "",
+                }}
+        }
       }
-    }
-  ]
-)
     }
 
 }

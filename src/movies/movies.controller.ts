@@ -46,7 +46,19 @@ export class CronJobController {
     constructor ( private botService : BotService ) {}
     @Get('metadata')
     async GetMetadata() {
-        await this.botService.getMetadata();
+        this.botService.getMetadata();
+        return "Success"
+    }
+    @Get('update') 
+    async UpdateData() {
+        this.botService.updateData();
+        return "Success"
+    }
+}
+@Controller('wakeuptime') 
+export class WakeupTimeController {
+    @Get()
+    async wakeuptime() {
         return "Success"
     }
 }
