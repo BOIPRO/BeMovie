@@ -26,11 +26,6 @@ const getEpisodeAnime = async (anime) => {
     return infoEpisode.episodes
   }
   catch (error) {
-    const status = error.response?.status;
-    if (status >= 500) {
-      console.error(`Server Animapper dropdown epsiode ${status}`);
-      throw new Error("CRITICAL_PROVIDER_FAILURE");
-    }
     return []
   }
 }
