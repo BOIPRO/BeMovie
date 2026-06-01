@@ -23,7 +23,7 @@ const fetchFromAniList = async (page) => {
           pageInfo { hasNextPage }
           media(
           type: ANIME,
-            sort: UPDATED_AT_DESC
+            sort: POPULARITY_DESC
             isAdult: false,
             genre_not_in: ["Ecchi"],
             format_in: [TV, MOVIE, OVA, ONA],
