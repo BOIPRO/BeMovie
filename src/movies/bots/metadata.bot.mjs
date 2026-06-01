@@ -25,7 +25,6 @@ const fetchFromAniList = async (page) => {
           type: ANIME,
             sort: POPULARITY_DESC
             isAdult: false,
-            genre_not_in: ["Ecchi"],
             format_in: [TV, MOVIE, OVA, ONA],
             status_in: [RELEASING, NOT_YET_RELEASED,FINISHED]
             idMal_not: null,
