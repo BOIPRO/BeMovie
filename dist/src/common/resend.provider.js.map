@@ -1,0 +1,1 @@
+{"version":3,"file":"resend.provider.js","sourceRoot":"","sources":["../../../src/common/resend.provider.ts"],"names":[],"mappings":";;;AAAA,mCAAgC;AAEnB,QAAA,aAAa,GAAG,eAAe,CAAC;AAEhC,QAAA,cAAc,GAAG;IAC5B,OAAO,EAAE,qBAAa;IACtB,UAAU,EAAE,GAAG,EAAE;QACf,OAAO,IAAI,eAAM,CAAC,OAAO,CAAC,GAAG,CAAC,cAAc,CAAC,CAAC;IAChD,CAAC;CACF,CAAC"}
