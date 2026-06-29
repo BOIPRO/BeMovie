@@ -10,6 +10,8 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    "checkJs": false,
+    "allowJs": true,
     "target": "ES2023",
     "sourceMap": true,
      "baseUrl": "./",

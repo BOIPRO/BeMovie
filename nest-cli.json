@@ -3,8 +3,20 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "assets": ["**/*.mjs"],
-     "watchAssets": true,
-    "deleteOutDir": true
+    "deleteOutDir": true,
+
+    "assets": [
+      {
+         "include" : "../bots/**/*.mjs",
+         "watchAssets": true
+      }
+  ],
+  "watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": ["**/node_modules", "dist"] 
+  }
   }
 }
