@@ -1,1 +1,0 @@
-{"version":3,"file":"path.config.js","sourceRoot":"","sources":["../../../src/shared/path.config.ts"],"names":[],"mappings":";;;AAAA,+BAA+B;AAE/B,MAAM,YAAY,GAAG,OAAO,CAAC,GAAG,EAAE,CAAC;AAEtB,QAAA,KAAK,GAAG;IAGjB,uBAAuB,EAAE,IAAA,cAAO,EAAC,YAAY,EAAE,uBAAuB,CAAC;IAEvE,wBAAwB,EAAE,IAAA,cAAO,EAAC,YAAY,EAAE,wBAAwB,CAAC;CAC5E,CAAC"}
