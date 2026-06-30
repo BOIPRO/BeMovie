@@ -6,6 +6,8 @@ import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const memoryUsage = process.memoryUsage();
+  console.log(`Ứng dụng khởi tạo tốn: ${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB RAM`);
   app.use(cookieParser());
   app.enableCors({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
