@@ -97,12 +97,11 @@ export class StreamService {
                 if (!episodeId) {
                     return ""
                 }
-                const res: StreamLinkRes = await this.getURIEpisode(episodeId);
-                const id = res.link.split('/').pop()!;
-                this.saveStreamId(episode._id,episodeId,provider,id,server)
-                console.log(id)
-
-                return await this.getDecodeM3U8(id!)
+                // const id = res.link.split('/').pop()!;
+                // this.saveStreamId(episode._id,episodeId,provider,id,server)
+                // console.log(id)
+                return ''
+                // return await this.getDecodeM3U8(id!)
             }
         }
         console.log("Ko vao trong server")
@@ -214,85 +213,86 @@ export class StreamService {
         });
         return serverList;
     }
-    async getStreamLinkAVS(serverDu: ExtractedServer) {
+    // async getStreamLinkAVS(serverDu: ExtractedServer) {
 
 
-        // const EPISODE_URL = 'https://animevietsub.name/phim/one-piece-dao-hai-tac-a1/xem-phim.html';
-        const API_URL = 'https://animevietsub.pl/ajax/player';
+    //     // const EPISODE_URL = 'https://animevietsub.name/phim/one-piece-dao-hai-tac-a1/xem-phim.html';
+    //     const API_URL = 'https://animevietsub.pl/ajax/player';
 
-        const baseHeaders = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8',
-            'X-Requested-With': 'XMLHttpRequest'
-        };
+    //     const baseHeaders = {
+    //         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    //         'Accept': 'application/json, text/javascript, */*; q=0.01',
+    //         'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8',
+    //         'X-Requested-With': 'XMLHttpRequest',
+    //         'Cookies' : "adadadad"
+    //     };
 
-        try {
-            const payload = {
-                link: serverDu.token,
-                play: serverDu.type,
-                id: serverDu.id,
-                backuplinks: '1'
-            };
+    //     try {
+    //         const payload = {
+    //             link: serverDu.token,
+    //             play: serverDu.type,
+    //             id: serverDu.id,
+    //             backuplinks: '1'
+    //         };
 
-            const ajaxHeaders = {
-                ...baseHeaders,
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                // 'Referer': EPISODE_URL,
-            };
-            const response = await axios.post(API_URL, payload, {
-                headers: ajaxHeaders,
-                transformRequest: [(data) => {
-                    const dataObj = data as Record<string, any>;
-                    return Object.entries(dataObj).map(([key, val]) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`).join('&');
-                }]
-            });
-            return response.data;
+    //         const ajaxHeaders = {
+    //             ...baseHeaders,
+    //             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    //             // 'Referer': EPISODE_URL,
+    //         };
+    //         const response = await axios.post(API_URL, payload, {
+    //             headers: ajaxHeaders,
+    //             transformRequest: [(data) => {
+    //                 const dataObj = data as Record<string, any>;
+    //                 return Object.entries(dataObj).map(([key, val]) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`).join('&');
+    //             }]
+    //         });
+    //         return response.data;
 
-        } catch (error: any) {
-            if (error.response) {
-                console.error(`Lỗi từ phía Server (${error.response.status}):`, error.response.data);
-            } else {
-                console.error("Lỗi kết nối AJAX:", error.message);
-            }
-        }
-    }
-    async getURIEpisode(episodeId: number) {
-        const API_URL = 'https://animevietsub.pl/ajax/player';
-        const baseHeaders = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8',
-            'X-Requested-With': 'XMLHttpRequest'
-        };
-        const payload = {
-            episodeId: String(episodeId),
-            backup: '1'
-        };
-        try {
-            const response = await axios.post(API_URL, payload, {
-                headers: baseHeaders,
-                transformRequest: [(data) => {
-                    const dataObj = data as Record<string, any>;
-                    return Object.entries(dataObj).map(([key, val]) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`).join('&');
-                }]
-            });
-            const serverList = this.parseServers(response.data);
-            const serverDU = serverList.find(server => server.name.includes('DU'));
-            if (!serverDU) {
-                throw new NotFoundException("Không tìm thấy server DU trong danh sách.");
-            }
-            return await this.getStreamLinkAVS(serverDU);
-        }
-        catch (error: any) {
-            if (error.response) {
-                console.error(`Lỗi từ phía Server (${error.response.status}):`, error.response.data);
-            } else {
-                console.log(error)
-                console.error(" Lỗi kết nối AJAX:", error.message);
-            }
-        }
-    }
+    //     } catch (error: any) {
+    //         if (error.response) {
+    //             console.error(`Lỗi từ phía Server (${error.response.status}):`, error.response.data);
+    //         } else {
+    //             console.error("Lỗi kết nối AJAX:", error.message);
+    //         }
+    //     }
+    // }
+    // async getURIEpisode(episodeId: number) {
+    //     const API_URL = 'https://animevietsub.pl/ajax/player';
+    //     const baseHeaders = {
+    //         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    //         'Accept': 'application/json, text/javascript, */*; q=0.01',
+    //         'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8',
+    //         'X-Requested-With': 'XMLHttpRequest'
+    //     };
+    //     const payload = {
+    //         episodeId: String(episodeId),
+    //         backup: '1'
+    //     };
+    //     try {
+    //         const response = await axios.post(API_URL, payload, {
+    //             headers: baseHeaders,
+    //             transformRequest: [(data) => {
+    //                 const dataObj = data as Record<string, any>;
+    //                 return Object.entries(dataObj).map(([key, val]) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`).join('&');
+    //             }]
+    //         });
+    //         const serverList = this.parseServers(response.data);
+    //         const serverDU = serverList.find(server => server.name.includes('DU'));
+    //         if (!serverDU) {
+    //             throw new NotFoundException("Không tìm thấy server DU trong danh sách.");
+    //         }
+    //         return await this.getStreamLinkAVS(serverDU);
+    //     }
+    //     catch (error: any) {
+    //         if (error.response) {
+    //             console.error(`Lỗi từ phía Server (${error.response.status}):`, error.response.data);
+    //         } else {
+    //             console.log(error)
+    //             console.error(" Lỗi kết nối AJAX:", error.message);
+    //         }
+    //     }
+    // }
     async getDecodeM3U8(idStream: string) {
         const API_URL = `https://storage.googleapiscdn.com/playlist/${idStream}/playlist.m3u8`
         const baseHeaders = {
