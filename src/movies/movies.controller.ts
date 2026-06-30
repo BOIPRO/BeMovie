@@ -1,6 +1,5 @@
 import { Controller, Get, ParseIntPipe, Query, Res, ValidationPipe } from '@nestjs/common';
 import { MoviesService } from './services/movies.service';
-import { BotService } from './services/bot.sync.service';
 import { GetAnime } from '../common/dto/get-anime.dto';
 import { GetStreamQueryDto } from 'src/common/dto/get-stream-dto';
 import { SearchAnime } from '../common/dto/search-anime.dto';
@@ -65,20 +64,6 @@ export class MoviesController {
     async test() {
         // return await this.streamService.getM3u8FromApi('VXyCbbSh_eGth0246zBKPTGGUHf4YK10ZW358oEpxlskXxcZUL6lqW9oxSdDs6rSqDkALsyQq9c-38GVhOQeYhuMsIeIE1zvaD00G7y5Yn1yr8b7L6_5NCm7dltbSwb0');
         return await this.streamService.getTokenUser();
-    }
-}
-@Controller('cronjob')
-export class CronJobController {
-    constructor(private botService: BotService) { }
-    // @Get('metadata')
-    // async GetMetadata() {
-    //     this.botService.getMetadata();
-    //     return "Success"
-    // }
-    @Get('update')
-    async UpdateData() {
-        this.botService.triggerBotCrawl();
-        return "Success"
     }
 }
 @Controller('wakeuptime')
