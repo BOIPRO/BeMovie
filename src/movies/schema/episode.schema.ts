@@ -34,7 +34,7 @@ export const SourceSchema = SchemaFactory.createForClass(Source);
   strict: false
 })
 export class Episode {
-  @Prop({ type: Number, required: true, index: true })
+  @Prop({ type: Number, required: true,index: true })
   anilistId!: number;
 
   @Prop({ type: String })
@@ -44,8 +44,9 @@ export class Episode {
   @Prop({ type: [SourceSchema] })
   sources!: Source[];
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   episodeSlug!: string;
 }
 
 export const EpisodeSchema = SchemaFactory.createForClass(Episode);
+EpisodeSchema.index({ anilistId: 1, episodeSlug: 1 });

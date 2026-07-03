@@ -7,7 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 export class MoviesService {
   constructor(
     private readonly redisService: RedisService,
-    @InjectModel(Anime.name)
+    @InjectModel(Anime.name as unknown as string)
     private animeModel: Model<Anime>
   ) { }
   private AnimeStrategies: Record<string, (limit: number) => Promise<Partial<Anime>[]>> = {
@@ -64,35 +64,35 @@ export class MoviesService {
         return data
       }
     },
-    popularity : async(limit : number) => {
-       const data = await this.animeModel.find({
-      status: "MAPPED",
-      "mappings.provider": "animevietsub",
-      "mappings.providerStatus": { $ne: null }
-    }).sort({ "anilistData.popularity": -1 })
-      .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug mappings.description mappings.title ').limit(limit).lean().exec()
-    // await this.redisService.set(key, JSON.stringify(data), expiretime)
-    return data
+    popularity: async (limit: number) => {
+      const data = await this.animeModel.find({
+        status: "MAPPED",
+        "mappings.provider": "animevietsub",
+        "mappings.providerStatus": { $ne: null }
+      }).sort({ "anilistData.popularity": -1 })
+        .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug mappings.description mappings.title ').limit(limit).lean().exec()
+      // await this.redisService.set(key, JSON.stringify(data), expiretime)
+      return data
     },
-    animeOfTheYear : async(limit : number) => {
+    animeOfTheYear: async (limit: number) => {
       const nowYear = new Date().getFullYear()
-    const data = await this.animeModel.find({
-      status: "MAPPED",
-      "mappings.provider": "animevietsub",
-      "mappings.providerStatus": { $ne: null },
-      "anilistData.seasonYear": nowYear
-    }).sort({ "anilistData.trending": -1 })
+      const data = await this.animeModel.find({
+        status: "MAPPED",
+        "mappings.provider": "animevietsub",
+        "mappings.providerStatus": { $ne: null },
+        "anilistData.seasonYear": nowYear
+      }).sort({ "anilistData.trending": -1 })
 
-      .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug  mappings.description mappings.title').limit(limit).lean().exec()
-    return data
+        .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug  mappings.description mappings.title').limit(limit).lean().exec()
+      return data
     }
   }
-  async getAnimeData(limit :number,type : string) {
+  async getAnimeData(limit: number, type: string) {
     const executionFn = this.AnimeStrategies[type]
     if (!executionFn) return [];
     return executionFn(limit)
   }
-  async getMultipleAnimeLists(limit :number,types : string[]) {
+  async getMultipleAnimeLists(limit: number, types: string[]) {
     const results = await Promise.all(
       types.map(type => this.getAnimeData(limit, type))
     );

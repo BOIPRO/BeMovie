@@ -135,6 +135,24 @@ export class Anime {
 export const AnimeSchema = SchemaFactory.createForClass(Anime);
 
 // Khởi tạo các Hợp Chỉ Mục (Indexes) từ schema gốc của bạn
-AnimeSchema.index({ status: 1 });
-AnimeSchema.index({ 'mappings.provider': 1, 'mappings.providerId': 1 });
-AnimeSchema.index({ 'anilistData.trending': -1 });
+// AnimeSchema.index(
+//   {"anilistData.trending": -1},
+//   { 
+//     partialFilterExpression: { 
+//       status: "MAPPED",
+//       "mappings.provider": "animevietsub"
+//     } 
+//   }
+// )
+// CHi tao index cho nhung bo MAPPED
+AnimeSchema.index(
+  { 'status': 1, 'mappings.provider': 1, 'anilistData.trending': -1 },
+  { partialFilterExpression: { status: "MAPPED" } }
+);
+// AnimeSchema.index({ 'mappings.provider': 1, 'mappings.providerId': 1 });
+// AnimeSchema.index({ 
+//   "status": 1, 
+//   "mappings.provider": 1, 
+//   "mappings.providerStatus": 1, 
+//   "anilistData.trending": -1 
+// });
