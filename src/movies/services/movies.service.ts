@@ -3,16 +3,63 @@ import { RedisService } from 'src/common/redis/redis.service';
 import { Model } from 'mongoose';
 import { Anime } from "../schema/anime.schema";
 import { InjectModel } from '@nestjs/mongoose';
+import { Episode } from '../schema/episode.schema';
 @Injectable()
 export class MoviesService {
   constructor(
     private readonly redisService: RedisService,
-    @InjectModel(Anime.name as unknown as string)
-    private animeModel: Model<Anime>
+    @InjectModel(Anime.name)
+    private animeModel: Model<Anime>,
+    @InjectModel(Episode.name)
+    private episodeModel: Model<Episode>
   ) { }
   private AnimeStrategies: Record<string, (limit: number) => Promise<Partial<Anime>[]>> = {
     banner: async (limit: number) => {
+      // const bannerAnime = await this.animeModel.aggregate([
+      //   {
+      //     $match: {
+      //       status: "MAPPED",
+      //       "anilistData.averageScore": { $gte: 75 },
+      //       "anilistData.bannerImage": { $ne: null },
+      //       "anilistData.seasonYear": 2026
+      //     }
+      //   },
+      //   { $unwind: "$mappings" },
+      //   {
+      //     $match: {
+      //       "mappings.provider": "animevietsub"
+      //     }
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: "episodes",
+      //       let: { anime_id: "$_id" },
+      //       pipeline: [
+      //         { $match: { $expr: { $eq: ["$animeId", "$$anime_id"] } } },
+      //         { $sort: { episodeNumber: 1 } }, // Sắp xếp để lấy tập nhỏ nhất (tập 1)
+      //         { $limit: 1 } // Chỉ lấy đúng 1 tập đầu tiên
+      //       ],
+      //       as: "firstEpisode" // Kết quả sẽ là một mảng có 1 phần tử
+      //     }
+      //   },
+
+      //   { $sample: { size: 10 } },
+      //   {
+      //     $project: {
+      //       _id: 1,
+      //       anilistId: 1,
+      //       "anilistData.averageScore": 1,
+      //       "anilistData.bannerImage": 1,
+      //       "anilistData.seasonYear": 1,
+      //       "anilistData.trailer": 1,
+      //       "anilistData.coverImage.large": 1,
+      //       title: "$mappings.title" // Gọi trực tiếp như thế này là xong!
+
+      //     }
+      //   }
+      // ]);
       const bannerAnime = await this.animeModel.aggregate([
+        // 1. Lọc anime
         {
           $match: {
             status: "MAPPED",
@@ -22,27 +69,47 @@ export class MoviesService {
           }
         },
         { $unwind: "$mappings" },
+        { $match: { "mappings.provider": "animevietsub" } },
+
+        // 2. Chọn ngẫu nhiên 5 anime
+        { $sample: { size: 10 } },
+
+        // 3. Lookup dựa trên anilistId
         {
-          $match: {
-            "mappings.provider": "animevietsub"
+          $lookup: {
+            from: "episodes",
+            let: { anilistId: "$anilistId" }, // Thay đổi ở đây: lấy anilistId từ anime
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$anilistId", "$$anilistId"] } // So sánh với anilistId trong collection episodes
+                }
+              },
+              { $sort: { episodeNumber: 1 } },
+              { $limit: 1 }
+            ],
+            as: "firstEpisode"
           }
         },
 
-        { $sample: { size: 10 } },
+        // 4. Project kết quả
         {
           $project: {
             _id: 1,
+            slug: 1,
             anilistId: 1,
-            "anilistData.averageScore": 1,
+            title: "$mappings.title",
             "anilistData.bannerImage": 1,
-            "anilistData.seasonYear": 1,
+             "anilistData.averageScore": 1,
             "anilistData.trailer": 1,
-            "anilistData.coverImage.large": 1,
-            title: "$mappings.title" // Gọi trực tiếp như thế này là xong!
-
+             "anilistData.coverImage.large": 1,
+             "anilistData.seasonYear": 1,
+            firstEpisode: { $arrayElemAt: ["$firstEpisode.episodeSlug",0] }
           }
         }
       ]);
+      console.log("Banner Anime:", bannerAnime); // Log kết quả để kiểm tra
+
       return bannerAnime
     },
     trending: async (limit: number) => {
