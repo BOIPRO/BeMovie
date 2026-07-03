@@ -15,49 +15,6 @@ export class MoviesService {
   ) { }
   private AnimeStrategies: Record<string, (limit: number) => Promise<Partial<Anime>[]>> = {
     banner: async (limit: number) => {
-      // const bannerAnime = await this.animeModel.aggregate([
-      //   {
-      //     $match: {
-      //       status: "MAPPED",
-      //       "anilistData.averageScore": { $gte: 75 },
-      //       "anilistData.bannerImage": { $ne: null },
-      //       "anilistData.seasonYear": 2026
-      //     }
-      //   },
-      //   { $unwind: "$mappings" },
-      //   {
-      //     $match: {
-      //       "mappings.provider": "animevietsub"
-      //     }
-      //   },
-      //   {
-      //     $lookup: {
-      //       from: "episodes",
-      //       let: { anime_id: "$_id" },
-      //       pipeline: [
-      //         { $match: { $expr: { $eq: ["$animeId", "$$anime_id"] } } },
-      //         { $sort: { episodeNumber: 1 } }, // Sắp xếp để lấy tập nhỏ nhất (tập 1)
-      //         { $limit: 1 } // Chỉ lấy đúng 1 tập đầu tiên
-      //       ],
-      //       as: "firstEpisode" // Kết quả sẽ là một mảng có 1 phần tử
-      //     }
-      //   },
-
-      //   { $sample: { size: 10 } },
-      //   {
-      //     $project: {
-      //       _id: 1,
-      //       anilistId: 1,
-      //       "anilistData.averageScore": 1,
-      //       "anilistData.bannerImage": 1,
-      //       "anilistData.seasonYear": 1,
-      //       "anilistData.trailer": 1,
-      //       "anilistData.coverImage.large": 1,
-      //       title: "$mappings.title" // Gọi trực tiếp như thế này là xong!
-
-      //     }
-      //   }
-      // ]);
       const bannerAnime = await this.animeModel.aggregate([
         // 1. Lọc anime
         {
@@ -100,11 +57,11 @@ export class MoviesService {
             anilistId: 1,
             title: "$mappings.title",
             "anilistData.bannerImage": 1,
-             "anilistData.averageScore": 1,
+            "anilistData.averageScore": 1,
             "anilistData.trailer": 1,
-             "anilistData.coverImage.large": 1,
-             "anilistData.seasonYear": 1,
-            firstEpisode: { $arrayElemAt: ["$firstEpisode.episodeSlug",0] }
+            "anilistData.coverImage.large": 1,
+            "anilistData.seasonYear": 1,
+            firstEpisode: { $arrayElemAt: ["$firstEpisode.episodeSlug", 0] }
           }
         }
       ]);
@@ -175,29 +132,73 @@ export class MoviesService {
     }
     return data
   }
-  async getPageAnimes(key: string, page: number, limit: number): Promise<{
+  async getPopularityPageAnimes(key: string, page: number, limit: number): Promise<{
     media: any[];
     totalPages: number;
   }> {
-    // const data = await this.redisService.get(key);
-    const data = null
+    const data = await this.redisService.get(key);
     if (data) {
       return data;
     }
     else {
       const expiretime = 300
-      const data = await this.getPage(page, limit);
-      // await this.redisService.set(key, JSON.stringify(data), expiretime)
+      const data = await this.getPopularityPage("anilistData.popularity", page, limit);
+      await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
     }
   }
-
-  async getPage(page: number = 1, limit: number = 30): Promise<{
+  async getYearPageAnimes(key: string, page: number, limit: number): Promise<{
+    media: any[];
+    totalPages: number;
+  }> {
+    const data = await this.redisService.get(key);
+    if (data) {
+      return data;
+    }
+    else {
+      const expiretime = 300
+      const data = await this.getYearPage( page, limit);
+      await this.redisService.set(key, JSON.stringify(data), expiretime)
+      return data
+    }
+  }
+  async getYearPage(page: number = 1, limit: number = 30): Promise<{
+    media: any[];
+    totalPages: number;
+  }> {
+    const currentYear = new Date().getFullYear();
+    const skip = (page - 1) * limit
+    const filter = {
+      "status": "MAPPED",
+      "mappings.provider": "animevietsub",
+      "mappings.providerStatus": { $ne: null },
+      "anilistData.seasonYear": currentYear
+    };
+    const [data, totalDocuments] = await Promise.all([
+      this.animeModel
+        .find(filter)
+        .sort({ "anilistData.popularity": -1 })
+        .skip(skip)
+        .limit(limit)
+        .select('anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending')
+        .lean()
+        .exec(),
+      this.animeModel.countDocuments(filter)
+    ])
+    const effectiveTotal = Math.max(0, totalDocuments);
+    const totalPages = Math.ceil(effectiveTotal / limit);
+    return {
+      media: data,
+      totalPages: totalPages
+    }
+  }
+  async getPopularityPage(conditionalSort: string, page: number = 1, limit: number = 30): Promise<{
     media: any[];
     totalPages: number;
   }> {
     const skip = (page - 1) * limit
     const filter = {
+      "status": "MAPPED",
       "mappings.provider": "animevietsub",
       "mappings.providerStatus": { $ne: null }
     };
@@ -207,7 +208,7 @@ export class MoviesService {
         .sort({ "anilistData.popularity": -1 })
         .skip(skip)
         .limit(limit)
-        .select('anilistId anilistData.genres anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug anilistData.title.romaji mappings.description mappings.title anilistData.trending anilistData.title.english coverImage.large')
+        .select('anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending')
         .lean()
         .exec(),
       this.animeModel.countDocuments(filter)

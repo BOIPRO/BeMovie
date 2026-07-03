@@ -12,9 +12,14 @@ export class MoviesController {
         private readonly moviesService: MoviesService,
         private readonly streamService: StreamService
     ) { }
-    @Get('page')
+    @Get('anime-pho-bien')
     async getAnimes(@Query(new ValidationPipe()) query: GetAnime) {
-        const dataPage = await this.moviesService.getPageAnimes(`page:${query.page}`, query.page, query.limit)
+        const dataPage = await this.moviesService.getPopularityPageAnimes(`page-popularity:${query.page}`, query.page, query.limit)
+        return dataPage
+    }
+    @Get('anime-trong-nam')
+    async getYearAnimes(@Query(new ValidationPipe()) query: GetAnime) {
+        const dataPage = await this.moviesService.getYearPageAnimes(`page-year:${query.page}`, query.page, query.limit)
         return dataPage
     }
     @Get('search')
@@ -42,13 +47,6 @@ export class MoviesController {
         return (await this.moviesService.findOneAnime(id))
     }
     @Get('stream')
-    /**
-     *  xEnvelop : response.headers['x-envelop'],
-                xEdgeTag : response.headers['x-edge-tag'],
-                xCacheNode : response.headers['x-cache-node'],
-                xRequestTrace : response.headers['x-request-trace'],
-                xProxyDigest : response.headers['x-proxy-digest']
-     */
     async getStreamAnime(@Query() query: GetStreamQueryDto ,@Res() res: Response) {
         const data: any = await this.streamService.getStreamingLink(query.anilistId, query.episodeSlug, query.provider, query.server);
         const m3u8Content = typeof data === 'object' ? data.m3u8 : data;
@@ -60,11 +58,11 @@ export class MoviesController {
         // Gửi chuỗi về như một file text
         return res.send(m3u8Content);
     }
-    @Get('test')
-    async test() {
-        // return await this.streamService.getM3u8FromApi('VXyCbbSh_eGth0246zBKPTGGUHf4YK10ZW358oEpxlskXxcZUL6lqW9oxSdDs6rSqDkALsyQq9c-38GVhOQeYhuMsIeIE1zvaD00G7y5Yn1yr8b7L6_5NCm7dltbSwb0');
-        return await this.streamService.getTokenUser();
-    }
+    // @Get('test')
+    // async test() {
+    //     // return await this.streamService.getM3u8FromApi('VXyCbbSh_eGth0246zBKPTGGUHf4YK10ZW358oEpxlskXxcZUL6lqW9oxSdDs6rSqDkALsyQq9c-38GVhOQeYhuMsIeIE1zvaD00G7y5Yn1yr8b7L6_5NCm7dltbSwb0');
+    //     return await this.streamService.getTokenUser();
+    // }
 }
 @Controller('wakeuptime')
 export class WakeupTimeController {
