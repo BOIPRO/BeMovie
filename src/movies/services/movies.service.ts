@@ -65,8 +65,6 @@ export class MoviesService {
           }
         }
       ]);
-      console.log("Banner Anime:", bannerAnime); // Log kết quả để kiểm tra
-
       return bannerAnime
     },
     trending: async (limit: number) => {
@@ -157,7 +155,7 @@ export class MoviesService {
     }
     else {
       const expiretime = 300
-      const data = await this.getYearPage( page, limit);
+      const data = await this.getYearPage(page, limit);
       await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
     }
@@ -220,68 +218,104 @@ export class MoviesService {
       totalPages: totalPages
     }
   }
-
+  async suggestAnime(search?: string) {
+    const result = await this.animeModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          compound: {
+            should: [
+              { autocomplete: { query: search, path: "anilistData.title.romaji" } },
+              { autocomplete: { query: search, path: "anilistData.title.english" } },
+              { autocomplete: { query: search, path: "mappings.title" } }
+            ],
+            filter: [
+              {
+                text: {
+                  path: "status",
+                  query: "MAPPED"
+                }
+              }
+            ],
+            minimumShouldMatch: 1
+          }
+        }
+      },
+      { $limit: 7 },
+      { $sort: { "anilistData.popularity": -1 } },
+      {
+        $project: {
+          _id: 1,
+          slug: 1,
+          anilistId: 1,
+          title: "$mappings.title",
+          "anilistData.coverImage.large": 1,
+          "anilistData.seasonYear": 1,
+        }
+      }
+    ])
+    return result
+  }
   async searchAnime(search?: string, page: number = 1, limit: number = 30): Promise<{
     media: any[];
     totalPages: number;
   }> {
     const skip = (page - 1) * limit;
-    const result = await
-      this.animeModel.aggregate([
-        {
-          $search: {
-            index: "searchAnime",
-            compound: {
-              must: [
-                {
-                  autocomplete: {
-                    query: search,
-                    path: "titleRomaji",
-                    fuzzy: {
-                      maxEdits: 1
-                    }
-                  }
-                },
-                {
-                  autocomplete: {
-                    query: search,
-                    path: "titleEnglish",
-                    fuzzy: {
-                      maxEdits: 1
-                    }
-                  }
-                }
-              ],
-              filter: [
-                {
-                  equals: {
-                    path: "isPublished",
-                    value: true
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          $facet: {
-            data: [
-              { $skip: skip },
-              { $limit: limit }
+    const result = await this.animeModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          compound: {
+            should: [
+              { autocomplete: { query: search, path: "anilistData.title.romaji" } },
+              { autocomplete: { query: search, path: "anilistData.title.english" } },
+              { autocomplete: { query: search, path: "mappings.title" } }
             ],
-            meta: [
+            filter: [
               {
-                $count: "total"
+                text: {
+                  path: "status",
+                  query: "MAPPED"
+                }
               }
-            ]
+            ],
+            minimumShouldMatch: 1
           }
         }
-      ])
-    const data = result[0]?.data || [];
-    const totalDocuments = result[0]?.meta[0]?.total || 0;
+      },
+      { $limit: limit },
+      { $sort: { "anilistData.popularity": -1 } },
+      { $skip: skip },
+      {
+        $project: {
+          _id: 1,
+          slug: 1,
+          anilistId: 1,
+          "mappings.title" :1,
+          "anilistData.coverImage.large": 1,
+          "anilistData.seasonYear": 1,
+          "mappings.description" : 1
+        }
+      }
+    ])
+    const countResult = await this.animeModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          count: { type: "total" }, // Quan trọng: dùng để đếm thay vì trả về document
+          compound: {
+            should: [ /* giống y hệt phần trên */],
+            filter: [{ equals: { path: "status", value: "MAPPED" } }]
+          }
+        }
+      },
+      { $limit: 1 },
+      { $replaceWith: "$$SEARCH_META" } // Lấy thông tin đếm được
+    ]);
+    const totalDocuments = countResult[0]?.count?.total || 0;;
     const totalPages = Math.ceil(totalDocuments / limit);
-    return {
-      media: data,
+    return {  
+      media: result,
       totalPages: totalPages
     }
   }

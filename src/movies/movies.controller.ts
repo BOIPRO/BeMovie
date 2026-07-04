@@ -58,11 +58,10 @@ export class MoviesController {
         // Gửi chuỗi về như một file text
         return res.send(m3u8Content);
     }
-    // @Get('test')
-    // async test() {
-    //     // return await this.streamService.getM3u8FromApi('VXyCbbSh_eGth0246zBKPTGGUHf4YK10ZW358oEpxlskXxcZUL6lqW9oxSdDs6rSqDkALsyQq9c-38GVhOQeYhuMsIeIE1zvaD00G7y5Yn1yr8b7L6_5NCm7dltbSwb0');
-    //     return await this.streamService.getTokenUser();
-    // }
+    @Get('suggest')
+    async suggestAnime(@Query('q') query: string) {
+        return await this.moviesService.suggestAnime(query);
+    }
 }
 @Controller('wakeuptime')
 export class WakeupTimeController {
