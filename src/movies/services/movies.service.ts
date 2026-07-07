@@ -73,7 +73,6 @@ export class MoviesService {
       }
       // anilistId anilistData.genres anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug anilistData.title.romaji mappings.description mappings.title anilistData.trending   anilistData.title.english coverImage.large
       else {
-        const expiretime = 300
         const data = await this.animeModel.find({
           status: "MAPPED",
           "mappings.provider": "animevietsub",
@@ -81,7 +80,6 @@ export class MoviesService {
         }).sort({ "anilistData.trending": -1 })
 
           .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending').limit(limit).lean().exec()
-        // await this.redisService.set(key, JSON.stringify(data), expiretime)
         return data
       }
     },
@@ -133,31 +131,16 @@ export class MoviesService {
     media: any[];
     totalPages: number;
   }> {
-    const data = await this.redisService.get(key);
-    if (data) {
-      return data;
-    }
-    else {
-      const expiretime = 300
       const data = await this.getPopularityPage("anilistData.popularity", page, limit);
-      await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
-    }
+
   }
   async getYearPageAnimes(key: string, page: number, limit: number): Promise<{
     media: any[];
     totalPages: number;
   }> {
-    const data = await this.redisService.get(key);
-    if (data) {
-      return data;
-    }
-    else {
-      const expiretime = 300
       const data = await this.getYearPage(page, limit);
-      await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
-    }
   }
   async getYearPage(page: number = 1, limit: number = 30): Promise<{
     media: any[];
