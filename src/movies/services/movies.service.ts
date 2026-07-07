@@ -20,7 +20,6 @@ export class MoviesService {
         {
           $match: {
             status: "MAPPED",
-            "anilistData.averageScore": { $gte: 75 },
             "anilistData.bannerImage": { $ne: null },
             "anilistData.seasonYear": 2026
           }
