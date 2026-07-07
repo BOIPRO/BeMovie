@@ -6,12 +6,31 @@ import { RedisModule } from './common/redis/redis.module';
 import { MoviesModule } from './movies/movies.module';
 import { DatabaseModule } from './common/database/database.module';
 import { AuthModule } from './auth/auth.module';
+import { ThrottlerModule,ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 @Module({
-  imports: [ConfigModule.forRoot({
-    isGlobal : true
-  }),RedisModule, MoviesModule, DatabaseModule, AuthModule],
+  imports: [ConfigModule.forRoot({isGlobal : true,}),
+    ThrottlerModule.forRoot([{
+      name: 'short',
+      ttl: 60000,
+      limit: 100,
+    },
+    {
+      name: 'long',
+      ttl: 60000,
+      limit: 1000,
+    },
+  ]),
+    RedisModule, MoviesModule, DatabaseModule, AuthModule],
+  
   controllers: [AppController],
-  providers: [AppService],
-})
+ providers: [ AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,  
+    }
+  ],
+},
+)
 export class AppModule{
 }

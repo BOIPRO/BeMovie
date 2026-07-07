@@ -14,11 +14,12 @@ async function bootstrap() {
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   });
-app.use(logger)
-app.useGlobalPipes(new ValidationPipe({
-  transform: true,
-}));
-const port = process.env.PORT || 8080;
-await app.listen(port, '0.0.0.0');
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  app.use(logger)
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+  }));
+  const port = process.env.PORT || 8080;
+  await app.listen(port, '0.0.0.0');
 }
 bootstrap();

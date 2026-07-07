@@ -1,12 +1,8 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException, } from "@nestjs/common";
-import { RedisService } from "src/common/redis/redis.service";
+import {  Injectable } from "@nestjs/common";
 import { Episode } from "../schema/episode.schema";
-import { InjectModel, raw } from "@nestjs/mongoose";
+import { InjectModel} from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { ConfigService } from "@nestjs/config";
 import axios from 'axios';
-import * as cheerio from 'cheerio';
-import { Movie } from "../schema/movie.schema";
 import { DecryptService } from "./decryptm3u8.service";
 export interface EpisodeAnime {
     anilistID: number,
