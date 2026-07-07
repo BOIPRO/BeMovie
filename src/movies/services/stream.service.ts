@@ -4,6 +4,7 @@ import { InjectModel} from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import axios from 'axios';
 import { DecryptService } from "./decryptm3u8.service";
+import { RedisService } from "src/common/redis/redis.service";
 export interface EpisodeAnime {
     anilistID: number,
     episodeNumber: string,
@@ -31,13 +32,20 @@ export class StreamService {
         private episodeModel: Model<Episode>,
         // @InjectModel(Movie.name)
         // private movieModel: Model<Movie>,
+        private readonly redisService : RedisService,
         private readonly decryptService: DecryptService
     ) {
 
     }
     async getAnimeEpisodes(id: number): Promise<EpisodeAnime[]> {
-        const listEpsiode: EpisodeAnime[] = await this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber")
-        return listEpsiode
+        const listCache = await this.redisService.get(String(id))
+        if (listCache) 
+            return JSON.parse(listCache)
+        else {
+              const listEpsiode: EpisodeAnime[] = await this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber")
+               this.redisService.set(String(id),JSON.stringify(listEpsiode),300)
+            return listEpsiode
+        }
     }
     async getStreamingLink(anilistId: number, episodeSlug: string, provider: string, server: string): Promise<any> {
         const filter = {
@@ -47,7 +55,7 @@ export class StreamService {
         };
         const episode = await this.episodeModel
             .findOne(filter)
-            .select("sources")
+            .select("sources ")
             .lean()
             .exec();
         if (!episode) {
@@ -58,21 +66,17 @@ export class StreamService {
         if (server == "DU") {
             const url = targetServer?.url
             if (url) {
-                console.log(url)
-                return await this.getDecodeM3U8(url)
-            }
-            else {
-                const episodeId = targetProvider?.episodeId
-                console.log(episodeId)
-                if (!episodeId) {
-                    return ""
+                const rawM3U8 = await this.redisService.get(String(targetProvider.episodeId))
+                if (rawM3U8) {
+                    return rawM3U8
                 }
-                // const id = res.link.split('/').pop()!;
-                // this.saveStreamId(episode._id,episodeId,provider,id,server)
-                // console.log(id)
-                return ''
-                // return await this.getDecodeM3U8(id!)
+                else  {
+                     const dataM3U8 =  await this.getDecodeM3U8(url)
+                    this.redisService.set(String(targetProvider.episodeId),dataM3U8,2)
+                     return dataM3U8
+                }
             }
+            return ""
         }
         console.log("Ko vao trong server")
         // Xu li HDX
@@ -80,6 +84,7 @@ export class StreamService {
 
     }
     private async getDecodeM3U8(idStream: string) {
+
         const API_URL = `https://storage.googleapiscdn.com/playlist/${idStream}/playlist.m3u8`
         const baseHeaders = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
