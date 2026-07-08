@@ -110,7 +110,7 @@ export class MoviesService {
         status: "MAPPED",
         "mappings.provider": "animevietsub",
         "mappings.providerStatus": { $ne: "Completed" },
-      }).sort({"updateAt" : -1})
+      }).sort({"updatedAt" : -1})
       .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug  mappings.description mappings.title currentEpisode').limit(limit).lean().exec()
       return data
     }
