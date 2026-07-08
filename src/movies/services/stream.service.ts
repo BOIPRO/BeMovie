@@ -38,14 +38,13 @@ export class StreamService {
 
     }
     async getAnimeEpisodes(id: number): Promise<EpisodeAnime[]> {
-        const listCache = await this.redisService.get(String(id))
-        if (listCache) 
-            return JSON.parse(listCache)
-        else {
+        // const listCache = await this.redisService.get(String(id))
+        // if (listCache) 
+        //     return JSON.parse(listCache)
+        // else {
               const listEpsiode: EpisodeAnime[] = await this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber")
-               this.redisService.set(String(id),JSON.stringify(listEpsiode),300)
+            //    this.redisService.set(String(id),JSON.stringify(listEpsiode),300)
             return listEpsiode
-        }
     }
     async getStreamingLink(anilistId: number, episodeSlug: string, provider: string, server: string): Promise<any> {
         const filter = {
