@@ -127,7 +127,8 @@ export class Anime {
     default: null 
   })
   anilistData!: AnilistDataDetail;
-
+  @Prop({type : String})
+  currentEpisode! : string
   @Prop({ type: [SchemaFactory.createForClass(ProviderMapping)] })
   mappings!: ProviderMapping[];
 }

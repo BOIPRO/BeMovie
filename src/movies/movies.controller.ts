@@ -39,7 +39,7 @@ export class MoviesController {
      @SkipThrottle({short : true})
     @Get('home')
     async getHomePage() {
-        const activeLists = ['banner', 'trending', 'popularity', 'animeOfTheYear'];
+        const activeLists = ['banner', 'trending', 'popularity', 'animeOfTheYear','animeReleasing'];
         const limit = 10;
         return await this.moviesService.getMultipleAnimeLists(limit, activeLists);
     }

@@ -79,7 +79,7 @@ export class MoviesService {
           "mappings.providerStatus": { $ne: null }
         }).sort({ "anilistData.trending": -1 })
 
-          .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending').limit(limit).lean().exec()
+          .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending currentEpisode').limit(limit).lean().exec()
         return data
       }
     },
@@ -89,7 +89,7 @@ export class MoviesService {
         "mappings.provider": "animevietsub",
         "mappings.providerStatus": { $ne: null }
       }).sort({ "anilistData.popularity": -1 })
-        .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug mappings.description mappings.title ').limit(limit).lean().exec()
+        .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug mappings.description mappings.title currentEpisode ').limit(limit).lean().exec()
       // await this.redisService.set(key, JSON.stringify(data), expiretime)
       return data
     },
@@ -102,7 +102,16 @@ export class MoviesService {
         "anilistData.seasonYear": nowYear
       }).sort({ "anilistData.trending": -1 })
 
-        .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug  mappings.description mappings.title').limit(limit).lean().exec()
+        .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug  mappings.description mappings.title currentEpisode').limit(limit).lean().exec()
+      return data
+    },
+    animeReleasing : async (limit : number) => {
+      const data = await this.animeModel.find({
+        status: "MAPPED",
+        "mappings.provider": "animevietsub",
+        "mappings.providerStatus": { $ne: "Completed" },
+      }).sort({"updateAt" : -1})
+      .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug  mappings.description mappings.title currentEpisode').limit(limit).lean().exec()
       return data
     }
   }
@@ -131,7 +140,7 @@ export class MoviesService {
     media: any[];
     totalPages: number;
   }> {
-      const data = await this.getPopularityPage("anilistData.popularity", page, limit);
+      const data = await this.getPopularityPage(page, limit);
       return data
 
   }
@@ -160,7 +169,7 @@ export class MoviesService {
         .sort({ "anilistData.popularity": -1 })
         .skip(skip)
         .limit(limit)
-        .select('anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending')
+        .select('anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending currentEpisode')
         .lean()
         .exec(),
       this.animeModel.countDocuments(filter)
@@ -172,7 +181,7 @@ export class MoviesService {
       totalPages: totalPages
     }
   }
-  async getPopularityPage(conditionalSort: string, page: number = 1, limit: number = 30): Promise<{
+  async getPopularityPage( page: number = 1, limit: number = 30): Promise<{
     media: any[];
     totalPages: number;
   }> {
@@ -188,7 +197,7 @@ export class MoviesService {
         .sort({ "anilistData.popularity": -1 })
         .skip(skip)
         .limit(limit)
-        .select('anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending')
+        .select('anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending currentEpisode')
         .lean()
         .exec(),
       this.animeModel.countDocuments(filter)
