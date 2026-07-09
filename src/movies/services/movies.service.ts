@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { RedisService } from 'src/common/redis/redis.service';
+// import { RedisService } from 'src/common/redis/redis.service';
 import { Model } from 'mongoose';
 import { Anime } from "../schema/anime.schema";
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,12 +7,47 @@ import { Episode } from '../schema/episode.schema';
 @Injectable()
 export class MoviesService {
   constructor(
-    private readonly redisService: RedisService,
+    // private readonly redisService: RedisService,
     @InjectModel(Anime.name)
     private animeModel: Model<Anime>,
     @InjectModel(Episode.name)
     private episodeModel: Model<Episode>
   ) { }
+  private queryListAnime = async (conditionalMatch: Record<string, any>, conditionalSort: Record<string, any>, limit: number, skip: number) => {
+    const data = await this.animeModel.aggregate([
+      {
+        $match: conditionalMatch
+      },
+      { $sort: conditionalSort },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          _id: 0,
+          anilistId: 1,
+          "anilistData.coverImage.large": 1,
+          slug: 1,
+          currentEpisode: 1,
+          title: {
+            $let: {
+              vars: {
+                target: {
+                  $filter: {
+                    input: "$mappings",
+                    as: "m",
+                    cond: { $eq: ["$$m.provider", "animevietsub"] }
+                  }
+                }
+              },
+              in: { $arrayElemAt: ["$$target.title", 0] }
+            }
+          }
+        }
+      }
+    ]);
+
+    return data;
+  }
   private AnimeStrategies: Record<string, (limit: number) => Promise<Partial<Anime>[]>> = {
     banner: async (limit: number) => {
       const bannerAnime = await this.animeModel.aggregate([
@@ -27,18 +62,15 @@ export class MoviesService {
         { $unwind: "$mappings" },
         { $match: { "mappings.provider": "animevietsub" } },
 
-        // 2. Chọn ngẫu nhiên 5 anime
         { $sample: { size: 10 } },
-
-        // 3. Lookup dựa trên anilistId
         {
           $lookup: {
             from: "episodes",
-            let: { anilistId: "$anilistId" }, // Thay đổi ở đây: lấy anilistId từ anime
+            let: { anilistId: "$anilistId" },
             pipeline: [
               {
                 $match: {
-                  $expr: { $eq: ["$anilistId", "$$anilistId"] } // So sánh với anilistId trong collection episodes
+                  $expr: { $eq: ["$anilistId", "$$anilistId"] }
                 }
               },
               { $sort: { episodeNumber: 1 } },
@@ -47,8 +79,6 @@ export class MoviesService {
             as: "firstEpisode"
           }
         },
-
-        // 4. Project kết quả
         {
           $project: {
             _id: 1,
@@ -67,52 +97,46 @@ export class MoviesService {
       return bannerAnime
     },
     trending: async (limit: number) => {
-      const dataTrending = null
-      if (dataTrending) {
-        return dataTrending;
-      }
-      // anilistId anilistData.genres anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug anilistData.title.romaji mappings.description mappings.title anilistData.trending   anilistData.title.english coverImage.large
-      else {
-        const data = await this.animeModel.find({
-          status: "MAPPED",
-          "mappings.provider": "animevietsub",
-          "mappings.providerStatus": { $ne: null }
-        }).sort({ "anilistData.trending": -1 })
-
-          .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending currentEpisode').limit(limit).lean().exec()
-        return data
-      }
-    },
-    popularity: async (limit: number) => {
-      const data = await this.animeModel.find({
+      const match = {
         status: "MAPPED",
         "mappings.provider": "animevietsub",
         "mappings.providerStatus": { $ne: null }
-      }).sort({ "anilistData.popularity": -1 })
-        .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug mappings.description mappings.title currentEpisode ').limit(limit).lean().exec()
-      // await this.redisService.set(key, JSON.stringify(data), expiretime)
-      return data
+      }
+      const sort = { "anilistData.trending": -1 };
+      const listTrendingAnimes = await this.queryListAnime(match, sort, limit, 0)
+      return listTrendingAnimes
+    },
+    popularity: async (limit: number) => {
+      const match = {
+        status: "MAPPED",
+        "mappings.provider": "animevietsub",
+        "mappings.providerStatus": { $ne: null }
+      }
+      const sort = { "anilistData.popularity": -1 };
+      const listPopularityAnimes = this.queryListAnime(match, sort, limit, 0)
+      return listPopularityAnimes;
     },
     animeOfTheYear: async (limit: number) => {
       const nowYear = new Date().getFullYear()
-      const data = await this.animeModel.find({
+      const match = {
         status: "MAPPED",
         "mappings.provider": "animevietsub",
         "mappings.providerStatus": { $ne: null },
         "anilistData.seasonYear": nowYear
-      }).sort({ "anilistData.trending": -1 })
-
-        .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug  mappings.description mappings.title currentEpisode').limit(limit).lean().exec()
-      return data
+      }
+      const sort = { "anilistData.trending": -1 }
+      const listAnimesOfYear = this.queryListAnime(match, sort, limit, 0)
+      return listAnimesOfYear
     },
-    animeReleasing : async (limit : number) => {
-      const data = await this.animeModel.find({
+    animeReleasing: async (limit: number) => {
+      const match = {
         status: "MAPPED",
         "mappings.provider": "animevietsub",
         "mappings.providerStatus": { $ne: "Completed" },
-      }).sort({"updatedAt" : -1})
-      .select(' anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season  slug  mappings.description mappings.title currentEpisode').limit(limit).lean().exec()
-      return data
+      }
+      const sort = { "updatedAt": -1 }
+      const listAnimeReleasing = this.queryListAnime(match, sort, limit, 0)
+      return listAnimeReleasing
     }
   }
   async getAnimeData(limit: number, type: string) {
@@ -130,26 +154,68 @@ export class MoviesService {
     }, {} as Record<string, any>);
   }
   async findOneAnime(id: number): Promise<Partial<Anime>[]> {
-    const data = await this.animeModel.find({ anilistId: id }).select('anilistId anilistData.genres anilistData.coverImage.large anilistData.bannerImage anilistData.seasonYear anilistData.season  slug anilistData.title mappings.description mappings.title anilistData.trending coverImage.large anilistData.averageScore')
+    const data = await this.animeModel.aggregate([
+      // 1. Tìm đúng document cần thiết
+      { $match: { anilistId: id } },
+
+      // 2. Chuyển đổi dữ liệu để lọc title
+      {
+        $project: {
+          anilistId: 1,
+          "anilistData.genres": 1,
+          "anilistData.coverImage.large": 1,
+          "anilistData.seasonYear": 1,
+          "anilistData.title.romaji": 1,
+          "anilistData.title.english": 1,
+          "anilistData.averageScore": 1,
+          "mappings.description": 1,
+          slug: 1,
+          // Lọc title của animevietsub từ mảng mappings
+          animevietInfo: {
+            $let: {
+              vars: {
+                target: {
+                  $filter: {
+                    input: "$mappings",
+                    as: "m",
+                    cond: { $eq: ["$$m.provider", "animevietsub"] }
+                  }
+                }
+              },
+              in: { $arrayElemAt: ["$$target", 0] }
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          anilistId: 1,
+          "anilistData": 1,
+          slug: 1,
+          title: "$animevietInfo.title",
+          description: "$animevietInfo.description"
+        }
+      }
+    ]);
     if (!data) {
       throw new NotFoundException("Cant find anime");
     }
-    return data
+    return data[0]
   }
   async getPopularityPageAnimes(key: string, page: number, limit: number): Promise<{
     media: any[];
     totalPages: number;
   }> {
-      const data = await this.getPopularityPage(page, limit);
-      return data
+    const data = await this.getPopularityPage(page, limit);
+    return data
 
   }
   async getYearPageAnimes(key: string, page: number, limit: number): Promise<{
     media: any[];
     totalPages: number;
   }> {
-      const data = await this.getYearPage(page, limit);
-      return data
+    const data = await this.getYearPage(page, limit);
+    return data
   }
   async getYearPage(page: number = 1, limit: number = 30): Promise<{
     media: any[];
@@ -157,22 +223,16 @@ export class MoviesService {
   }> {
     const currentYear = new Date().getFullYear();
     const skip = (page - 1) * limit
-    const filter = {
+    const match = {
       "status": "MAPPED",
       "mappings.provider": "animevietsub",
       "mappings.providerStatus": { $ne: null },
       "anilistData.seasonYear": currentYear
     };
+    const sort = { "anilistData.popularity": -1 }
     const [data, totalDocuments] = await Promise.all([
-      this.animeModel
-        .find(filter)
-        .sort({ "anilistData.popularity": -1 })
-        .skip(skip)
-        .limit(limit)
-        .select('anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending currentEpisode')
-        .lean()
-        .exec(),
-      this.animeModel.countDocuments(filter)
+      this.queryListAnime(match, sort, limit, skip),
+      this.animeModel.countDocuments(match)
     ])
     const effectiveTotal = Math.max(0, totalDocuments);
     const totalPages = Math.ceil(effectiveTotal / limit);
@@ -181,26 +241,20 @@ export class MoviesService {
       totalPages: totalPages
     }
   }
-  async getPopularityPage( page: number = 1, limit: number = 30): Promise<{
+  async getPopularityPage(page: number = 1, limit: number = 30): Promise<{
     media: any[];
     totalPages: number;
   }> {
     const skip = (page - 1) * limit
-    const filter = {
+    const match = {
       "status": "MAPPED",
       "mappings.provider": "animevietsub",
       "mappings.providerStatus": { $ne: null }
     };
+    const sort = { "anilistData.popularity": -1 }
     const [data, totalDocuments] = await Promise.all([
-      this.animeModel
-        .find(filter)
-        .sort({ "anilistData.popularity": -1 })
-        .skip(skip)
-        .limit(limit)
-        .select('anilistId anilistData.coverImage.large anilistData.seasonYear anilistData.season mappings.title slug mappings.description anilistData.trending currentEpisode')
-        .lean()
-        .exec(),
-      this.animeModel.countDocuments(filter)
+      this.queryListAnime(match, sort, limit, skip),
+      this.animeModel.countDocuments(match)
     ])
     const effectiveTotal = Math.max(0, totalDocuments);
     const totalPages = Math.ceil(effectiveTotal / limit);
@@ -239,9 +293,22 @@ export class MoviesService {
           _id: 1,
           slug: 1,
           anilistId: 1,
-          title: "$mappings.title",
           "anilistData.coverImage.large": 1,
           "anilistData.seasonYear": 1,
+          title: {
+            $let: {
+              vars: {
+                target: {
+                  $filter: {
+                    input: "$mappings",
+                    as: "m",
+                    cond: { $eq: ["$$m.provider", "animevietsub"] }
+                  }
+                }
+              },
+              in: { $arrayElemAt: ["$$target.title", 0] }
+            }
+          }
         }
       }
     ])
@@ -252,138 +319,140 @@ export class MoviesService {
     totalPages: number;
   }> {
     const skip = (page - 1) * limit;
-    const result = await this.animeModel.aggregate([
-      {
-        $search: {
-          index: "default",
-          compound: {
-            should: [
-              { autocomplete: { query: search, path: "anilistData.title.romaji" } },
-              { autocomplete: { query: search, path: "anilistData.title.english" } },
-              { autocomplete: { query: search, path: "mappings.title" } }
-            ],
-            filter: [
-              {
-                text: {
-                  path: "status",
-                  query: "MAPPED"
-                }
-              }
-            ],
-            minimumShouldMatch: 1
-          }
-        }
-      },
-      { $limit: limit },
-      { $sort: { "anilistData.popularity": -1 } },
-      { $skip: skip },
-      {
-        $project: {
-          _id: 1,
-          currentEpisode : 1,
-          slug: 1,
-          anilistId: 1,
-          "mappings.title" :1,
-          "anilistData.coverImage.large": 1,
-          "anilistData.seasonYear": 1,
-          "mappings.description" : 1
-        }
+   const result = await this.animeModel.aggregate([
+  {
+    $search: {
+      index: "default",
+      compound: {
+        should: [
+          { autocomplete: { query: search, path: "anilistData.title.romaji" } },
+          { autocomplete: { query: search, path: "anilistData.title.english" } },
+          { autocomplete: { query: search, path: "mappings.title" } }
+        ],
+        filter: [{ text: { path: "status", query: "MAPPED" } }],
+        minimumShouldMatch: 1
       }
-    ])
-    const countResult = await this.animeModel.aggregate([
-      {
-        $search: {
-          index: "default",
-          count: { type: "total" }, // Quan trọng: dùng để đếm thay vì trả về document
-          compound: {
-            should: [ /* giống y hệt phần trên */],
-            filter: [{ equals: { path: "status", value: "MAPPED" } }]
+    }
+  },
+  {
+    $facet: {
+      // Nhánh 1: Lấy dữ liệu phân trang
+      data: [
+        { $sort: { "anilistData.popularity": -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $project: {
+            _id: 1,
+            slug: 1,
+            currentEpisode :1,
+            anilistId: 1,
+            "anilistData.coverImage.large": 1,
+            "anilistData.seasonYear": 1,
+            title: {
+              $let: {
+                vars: {
+                  target: {
+                    $filter: {
+                      input: "$mappings",
+                      as: "m",
+                      cond: { $eq: ["$$m.provider", "animevietsub"] }
+                    }
+                  }
+                },
+                in: { $arrayElemAt: ["$$target.title", 0] }
+              }
+            }
           }
         }
-      },
-      { $limit: 1 },
-      { $replaceWith: "$$SEARCH_META" } // Lấy thông tin đếm được
-    ]);
-    const totalDocuments = countResult[0]?.count?.total || 0;;
+      ],
+      // Nhánh 2: Lấy tổng số lượng kết quả
+      totalCount: [
+        { $count: "count" }
+      ]
+    }
+  }
+]);
+    const totalDocuments = result[0].totalCount[0]?.count || 0;
     const totalPages = Math.ceil(totalDocuments / limit);
-    return {  
-      media: result,
+    return {
+      media: result[0].data,
       totalPages: totalPages
     }
   }
-  async getTrailer() {
-    const URL = 'https://graphql.anilist.co';
-    const CHUNK_SIZE = 50;
-    const finalResults = {};
-    const chunkArray = (arr, size) =>
-      Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
-        arr.slice(i * size, i * size + size)
-      );
-    const query = `
-query ($ids: [Int]) {
-  Page(page: 1, perPage: 50) {
-    media(id_in: $ids) {
-      id
-      trailer {
-      id
-      site
-      thumbnail
-    }
-    }
-  }
-}
-`;
-    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-    const data = await this.animeModel.find({ status: "MAPPED" }).distinct("anilistId");
-    const chunks = Array.from({ length: Math.ceil(data.length / CHUNK_SIZE) }, (v, i) =>
-      data.slice(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE)
-    );
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
+  //   async getTrailer() {
+  //     const URL = 'https://graphql.anilist.co';
+  //     const CHUNK_SIZE = 50;
+  //     const finalResults = {};
+  //     const chunkArray = (arr, size) =>
+  //       Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+  //         arr.slice(i * size, i * size + size)
+  //       );
+  //     const query = `
+  // query ($ids: [Int]) {
+  //   Page(page: 1, perPage: 50) {
+  //     media(id_in: $ids) {
+  //       id
+  //       trailer {
+  //       id
+  //       site
+  //       thumbnail
+  //     }
+  //     }
+  //   }
+  // }
+  // `;
+  //     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  //     const data = await this.animeModel.find({ status: "MAPPED" }).distinct("anilistId");
+  //     const chunks = Array.from({ length: Math.ceil(data.length / CHUNK_SIZE) }, (v, i) =>
+  //       data.slice(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE)
+  //     );
+  //     for (let i = 0; i < chunks.length; i++) {
+  //       const chunk = chunks[i];
 
-      try {
-        // 1. Fetch dữ liệu từ AniList
-        const response = await fetch(URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, variables: { ids: chunk } })
-        });
+  //       try {
+  //         // 1. Fetch dữ liệu từ AniList
+  //         const response = await fetch(URL, {
+  //           method: 'POST',
+  //           headers: { 'Content-Type': 'application/json' },
+  //           body: JSON.stringify({ query, variables: { ids: chunk } })
+  //         });
 
-        if (!response.ok) {
-          console.error(`❌ Lỗi API AniList tại nhóm ${i + 1}`);
-          continue;
-        }
+  //         if (!response.ok) {
+  //           console.error(`❌ Lỗi API AniList tại nhóm ${i + 1}`);
+  //           continue;
+  //         }
 
-        const resData = await response.json();
-        const mediaList = resData.data.Page.media;
+  //         const resData = await response.json();
+  //         const mediaList = resData.data.Page.media;
 
-        if (mediaList.length === 0) continue;
+  //         if (mediaList.length === 0) continue;
 
-        // 2. Tạo mảng các thao tác (Operations) cho bulkWrite
-        const bulkOps = mediaList.map(anime => ({
-          updateOne: {
-            filter: { anilistId: anime.id }, // Tìm theo AniList ID
-            update: {
-              $set: {
-                "anilistData.trailer": anime.trailer,
-              }
-            },
-            upsert: false
-          }
-        }));
-        // 3. Thực thi bulkWrite ghi thẳng vào DB
-        const bulkResult = await this.animeModel.bulkWrite(bulkOps);
+  //         // 2. Tạo mảng các thao tác (Operations) cho bulkWrite
+  //         const bulkOps = mediaList.map(anime => ({
+  //           updateOne: {
+  //             filter: { anilistId: anime.id }, // Tìm theo AniList ID
+  //             update: {
+  //               $set: {
+  //                 "anilistData.trailer": anime.trailer,
+  //               }
+  //             },
+  //             upsert: false
+  //           }
+  //         }));
+  //         // 3. Thực thi bulkWrite ghi thẳng vào DB
+  //         const bulkResult = await this.animeModel.bulkWrite(bulkOps);
 
-        console.log(`✅ [Nhóm ${i + 1}/${chunks.length}] Ghi DB thành công: Upserted: ${bulkResult.upsertedCount}, Modified: ${bulkResult.modifiedCount}`);
+  //         console.log(`✅ [Nhóm ${i + 1}/${chunks.length}] Ghi DB thành công: Upserted: ${bulkResult.upsertedCount}, Modified: ${bulkResult.modifiedCount}`);
 
-        // Tránh spam API AniList quá nhanh
-        await sleep(1500);
+  //         // Tránh spam API AniList quá nhanh
+  //         await sleep(1500);
 
-      } catch (error) {
-        console.error(`❌ Lỗi tại nhóm thứ ${i + 1}:`, error);
-      }
-    }
+  //       } catch (error) {
+  //         console.error(`❌ Lỗi tại nhóm thứ ${i + 1}:`, error);
+  //       }
+  //     }
 
 
-  }
+  //   }
 }

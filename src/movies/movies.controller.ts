@@ -58,12 +58,8 @@ export class MoviesController {
     async getStreamAnime(@Query() query: GetStreamQueryDto ,@Res() res: Response) {
         const data: any = await this.streamService.getStreamingLink(query.anilistId, query.episodeSlug, query.provider, query.server);
         const m3u8Content = typeof data === 'object' ? data.m3u8 : data;
-
-        // QUAN TRỌNG: Thiết lập Header
         res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
         res.setHeader('Access-Control-Allow-Origin', '*');
-
-        // Gửi chuỗi về như một file text
         return res.send(m3u8Content);
     }
     @Get('suggest')
