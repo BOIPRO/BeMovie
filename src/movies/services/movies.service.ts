@@ -280,6 +280,7 @@ export class MoviesService {
       {
         $project: {
           _id: 1,
+          currentEpisode : 1,
           slug: 1,
           anilistId: 1,
           "mappings.title" :1,
