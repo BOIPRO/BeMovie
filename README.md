@@ -1,37 +1,46 @@
-# Backend cho BMovie
-## Overview
-xây dựng hệ thống tích hợp nhiều nguồn và cập nhật tập mưới và phim mới dễ dàng
+# BMovie Backend Service
+
+##  Overview
+Hệ thống Backend cho BMovie được phát triển với NestJS, đóng vai trò là "bộ não" xử lý tích hợp đa nguồn, quản lý dữ liệu anime và cung cấp API an toàn cho ứng dụng.
+
 ## Tech Stack
-Nestjs
+*   **Framework:** NestJS
+*   **Database:** MongoDB
+*   **Security & Utilities:** `nestjs-throttler`, `class-validator`, `class-transformer`, Resend (Email service).
 
-## Cấu trúc route và giải thích
-### route movies
-/anime-pho-bien          lấy danh sách phim phổ biến
-/anime-trong-nam          lấy danh sách phim trong năm
-/home                     lấy những danh sách phim phục vụ trang chủ
-/search                     lấy query khi người dùng search
-/episodes                 lấy danh sách tập của một bộ phim
-/info                     lấy thông tin một bộ phim
-/stream                   lấy m3u8 của một tập phim
-/suggest                  lấy gợi ý khi tìm kiếm (autocomplete)
-weakuptime - Do server được deploy trên render bản free nên cứ sau 20p server sẽ ngủ đông, tạo api này để server hoạt động 24/7 thông qua cronjob  tiện việc thử nghiệm
-### route auth
-/register         Nơi nhận password, username và email đăng ký
-/verify           Gửi xác nhận email bằng resend kèm mã OTP
-/resend           Gửi lại xác minh email để xác minh lại
-/login            Xác minh username và password
-/refresh          Cấp lại refreshToken cho user
-/logout           Đăng xuất khỏi tài khoản
-## Bảo mật
-Rate Limiting: Sử dụng `nestjs-throttler` để giới hạn số lượng request từ một IP, ngăn chặn tấn công Brute-force và Spam API.
-Request Validation & Sanitization: Sử dụng `class-validator` và `class-transformer` để lọc và xác thực dữ liệu đầu vào, ngăn chặn dữ liệu độc hại xâm nhập database.
-CORS Policy: Cấu hình nghiêm ngặt chỉ cho phép các domain tin cậy (Whitelisting) thực hiện request.
-## Database (MongoDB)
--Thiết kế bộ khung giúp tích hợp phim từ nhiều nguồn với dữ liệu chuẩn quốc tế làm gốc thông qua các mảng mappings đc thiết kế trong schema
-- Cho phép phân loại những dữ liệu đã map và dữ liệu chưa map, đồng thười phân loại những bộ phim đã map theo 2 phần chính là phim đang chiểu và phim đã kết thúc
-- Xây dựng khung episode đễ chứa thông tin tập phim từ nhiều nguồn , kết nối với dữ liệu chứa metadata thông qua anilistId
-- Đánh index những phần quan trọng để tăng tốc độ truy vấn dũ liệu.
-## Tính năng sắp cập nhật
-Reset PassWord
-Liên kết những season phim lại với nhau
+##  API Documentation
+### Movies Module
+| Route | Description |
+| :--- | :--- |
+| `/home` | Cung cấp dữ liệu tập trung (Featured, Trending, Recent) cho trang chủ. |
+| `/info` | Truy vấn metadata chi tiết của phim (hỗ trợ bởi AniList ID). |
+| `/episodes` | Lấy danh sách tập phim từ nhiều nguồn tích hợp. |
+| `/stream` | Truy xuất nguồn m3u8 bảo mật cho video player. |
+| `/search` | Full-text search và lọc dữ liệu nâng cao. |
+| `/suggest` | Cung cấp kết quả Autocomplete thời gian thực. |
+| `/anime-*` | Các endpoint phân trang (Pagination) cho danh mục Phổ biến/Trong năm. |
 
+### Auth Module
+| Route | Description |
+| :--- | :--- |
+| `/register` | Đăng ký tài khoản mới. |
+| `/verify` | Xác thực email thông qua mã OTP (tích hợp Resend). |
+| `/login` | Xác thực người dùng (Credential validation). |
+| `/refresh` | Rotation cơ chế RefreshToken đảm bảo phiên làm việc. |
+| `/resend` | Gửi lại email xác thực. |
+
+*Lưu ý: Endpoint `weakuptime` được triển khai để duy trì trạng thái hoạt động 24/7 cho server trên môi trường Render (bằng CronJob).*
+
+##  Bảo mật Hệ thống
+*   **Rate Limiting:** Tích hợp `nestjs-throttler` để chống Brute-force và Spam request trên các API nhạy cảm.
+*   **Data Validation:** Sử dụng `class-validator` và `class-transformer` để đảm bảo toàn vẹn dữ liệu đầu vào, ngăn chặn tấn công Injection.
+*   **CORS Policy:** Thiết lập danh sách domain tin cậy (Whitelisting) nghiêm ngặt cho truy cập API.
+
+##  Database Design (MongoDB)
+*   **Unified Mapping:** Thiết kế Schema hỗ trợ "mapping" nhiều nguồn dữ liệu vào một cấu trúc chuẩn quốc tế.
+*   **Data Categorization:** Phân loại thông minh giữa phim đang chiếu (On-going) và đã kết thúc (Completed).
+*   **Efficient Indexing:** Tối ưu hóa Index cho các field quan trọng nhằm tăng tốc độ truy vấn metadata và tập phim.
+
+##  Lộ trình phát triển
+*   **Account Recovery:** Triển khai chức năng Quên mật khẩu/Khôi phục tài khoản.
+*   **Contextual linking:** Xây dựng logic liên kết các season phim cùng series để nâng cao trải nghiệm xem liên tục.
