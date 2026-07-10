@@ -31,12 +31,6 @@ export class MoviesController {
         return data
     }
      @SkipThrottle({short : true})
-    @Get('trending')
-    async getTrendingAnime(@Query(new ValidationPipe()) query: GetTrendingAnime) {
-        const dataTrending = await this.moviesService.getAnimeData(query.amount, 'trending');
-        return dataTrending
-    }
-     @SkipThrottle({short : true})
     @Get('home')
     async getHomePage() {
         const activeLists = ['banner', 'trending', 'popularity', 'animeOfTheYear','animeReleasing'];
