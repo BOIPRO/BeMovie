@@ -16,7 +16,7 @@ export class AuthService {
         @Inject(RESEND_CLIENT) private readonly resend: Resend,
         private jwtService: JwtService,
         private readonly redisService: RedisService
-    ) {}
+    ) { }
     private async sendVerificationEmail(to: string, code: string): Promise<void> {
         try {
             await this.resend.emails.send({
@@ -60,23 +60,23 @@ export class AuthService {
     }
     private async checkUsernameUnique(username: string): Promise<void> {
         const exists = await this.userModel.findOne({ username }).exec();
-        if (exists) throw new ConflictException("Username nay da ton tai");
+        if (exists) throw new ConflictException("Tên đăng nhập đã tồn tại");
     }
     async validateEmailForRegistration(email: string, username: string, password: string): Promise<void> {
         const user = await this.getUserByEmail(email)
         if (user) {
             if (user.isVerify)
-                throw new ConflictException("Email da ton tai")
-            if (user.username === username) {
-                await this.updateUserToDB(email, username, password)
-            }
+                throw new ConflictException("Email hoặc tên đăng nhập đã tồn tại")
             else {
                 await this.checkUsernameUnique(username)
                 await this.updateUserToDB(email, username, password)
             }
+
         }
-        else
+        else {
+            await this.checkUsernameUnique(username)
             await this.updateUserToDB(email, username, password)
+        }
     }
     async VerifyEmail(email: string, otp: string): Promise<void> {
         const { otpHash } = await this.redisService.get(`otp:${email}`)
@@ -115,15 +115,12 @@ export class AuthService {
     }
     async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
         const user = await this.userModel.findOne({ username }).select('username password isVerify').exec();
-        if (!user) {
-            throw new UnauthorizedException('Username hoac mat khau khong dung');
-        }
-        if (!user.isVerify) {
-            throw new UnauthorizedException('Tai khoan chua xac thuc email');
+        if (!user || !user.isVerify) {
+            throw new UnauthorizedException('Tên người dùng hoặc mật khẩu không đúng');
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new UnauthorizedException('Username hoac mat khau khong dung');
+            throw new UnauthorizedException('Tên người dùng hoặc mật khẩu không đúng');
         }
         const accessToken = this.jwtService.sign(
             { id: user._id, username: user.username },

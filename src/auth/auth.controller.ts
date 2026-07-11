@@ -12,6 +12,7 @@ export class AuthController {
     ) { }
     @Post('register')
     async registerUser(@Body() createUserDto: CreateUserDto) {
+        console.log(createUserDto)
         await this.authService.validateEmailForRegistration(createUserDto.email, createUserDto.username, createUserDto.password)
         return new Response(
             JSON.stringify({ message: 'ok' }),
