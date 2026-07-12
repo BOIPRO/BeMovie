@@ -113,8 +113,8 @@ export class AuthService {
             throw new BadRequestException("Co loi xay ra")
         }
     }
-    async login(username: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
-        const user = await this.userModel.findOne({ username }).select('username password isVerify').exec();
+    async login(username: string, password: string): Promise<{ user: object; accessToken: string, refreshToken: string }> {
+        const user = await this.userModel.findOne({ username }).select('username password isVerify email').exec();
         if (!user || !user.isVerify) {
             throw new UnauthorizedException('Tên người dùng hoặc mật khẩu không đúng');
         }
@@ -124,29 +124,48 @@ export class AuthService {
         }
         const accessToken = this.jwtService.sign(
             { id: user._id, username: user.username },
-            { expiresIn: '15m' }
+            {
+                secret: process.env.JWT_SECRET,
+                expiresIn: '15m'
+            }
         );
         const refreshToken = this.jwtService.sign(
             { id: user._id, username: user.username },
-            { expiresIn: '7d' }
+
+            {
+                secret: process.env.JWT_SECRET,
+                expiresIn: '7d'
+            }
         );
         const refreshTokenExpireAt = 7 * 24 * 60 * 60
         await this.redisService.set(`refreshToken:${user._id}`, JSON.stringify({ refreshToken }), refreshTokenExpireAt);
         return {
+            user: {
+                id: user._id,
+                email: user.email,
+                username: user.username,
+            },
             accessToken,
             refreshToken,
         };
     }
+    async getProfile(id: string) {
+        const userInfo = await this.userModel.find({ _id: id }).select("username email")
+        return userInfo
+    }
     async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
         try {
             const decoded = this.jwtService.verify(refreshToken);
-            const user = await this.redisService.get(`refreshToken:${decoded.id}`);
-            if (!user || user.refreshToken !== refreshToken) {
-                throw new UnauthorizedException('Refresh token khong hop le');
-            }
+            // const user = await this.redisService.get(`refreshToken:${decoded.id}`);
+            // if (!user || user.refreshToken !== refreshToken) {
+            //     throw new UnauthorizedException('Refresh token khong hop le');
+            // }
             const accessToken = this.jwtService.sign(
-                { id: user._id, username: user.username },
-                { expiresIn: '15m' }
+                { id: decoded.id, username: decoded.username },
+                {
+                    secret: process.env.JWT_SECRET,
+                    expiresIn: '15m'
+                }
             );
             return { accessToken };
         } catch (error) {

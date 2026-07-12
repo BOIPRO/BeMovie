@@ -1,10 +1,11 @@
-import { Body, Controller, Post, UseGuards, Res, Req, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Res, Req, UnauthorizedException,Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/common/dto/user.dto';
 import { VerifyEmail } from 'src/common/dto/verify.dto';
 import { ResendDto } from 'src/common/dto/resend.dto';
 import { LoginDto } from 'src/common/dto/login.dto';
 import { type Response, type Request } from 'express';
+import { JwtAuthGuard } from 'src/common/guard/JwtAuthGuard';
 @Controller('auth')
 export class AuthController {
     constructor(
@@ -47,6 +48,13 @@ export class AuthController {
             }
         );
     }
+    @Get('me')
+    @UseGuards(JwtAuthGuard)
+    async getProfile(@Req() req : Request) {
+        const user = (req as any).user;
+        const userInfo= await this.authService.getProfile(user.id)
+        return userInfo[0]
+    }
     @Post('login')
     async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
         const result = await this.authService.login(loginDto.username, loginDto.password);
@@ -57,13 +65,10 @@ export class AuthController {
             path: '/',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
-        response.cookie('accessToken', result.accessToken, {
-            httpOnly: true, 
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/',
-            maxAge: 15 * 60 * 1000 
-        });
+       return {
+        user : result.user,
+        accessToken : result.accessToken
+       }
     }
     @Post('refresh')
     async refresh(@Req() request: Request,@Res({ passthrough: true }) response: Response) {
@@ -72,24 +77,14 @@ export class AuthController {
             throw new UnauthorizedException('Khong tm thay nguoi dung');
         }
         const result = await this.authService.refreshAccessToken(refreshToken);
-        response.cookie('accessToken', result.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/',
-            maxAge: 15 * 60 * 1000
-        });
+          return {
+        accessToken : result.accessToken
+       }
     }
     @Post('logout')
     async logout(@Res({passthrough : true}) response: Response) {
         await this.authService.logout(response.req.cookies['refreshToken']);
         response.clearCookie('refreshToken', {
-            httpOnly: true, 
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/'
-        });
-        response.clearCookie('accessToken',{
             httpOnly: true, 
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
