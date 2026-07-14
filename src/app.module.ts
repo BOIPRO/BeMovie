@@ -1,11 +1,9 @@
 import { Module} from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
-import { RedisModule } from './common/redis/redis.module';
-import { MoviesModule } from './movies/movies.module';
-import { DatabaseModule } from './common/database/database.module';
-import { AuthModule } from './auth/auth.module';
+import { RedisModule } from './modules/redis/redis.module';
+import { MoviesModule } from './modules/movie/movies.module';
+import { DatabaseModule } from './modules/database/database.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { ThrottlerModule,ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 @Module({
@@ -22,9 +20,7 @@ import { APP_GUARD } from '@nestjs/core';
     },
   ]),
     RedisModule, MoviesModule, DatabaseModule, AuthModule],
-  
-  controllers: [AppController],
- providers: [ AppService,
+ providers: [ 
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,  

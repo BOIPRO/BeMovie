@@ -1,9 +1,8 @@
 import { Controller, Get, ParseIntPipe, Query, Res, ValidationPipe,UseGuards } from '@nestjs/common';
 import { MoviesService } from './services/movies.service';
-import { GetAnime } from '../common/dto/get-anime.dto';
-import { GetStreamQueryDto } from 'src/common/dto/get-stream-dto';
-import { SearchAnime } from '../common/dto/search-anime.dto';
-import { GetTrendingAnime } from '../common/dto/get-trending-anime.dto';
+import { GetAnime } from './dto/get-anime.dto';
+import { GetStreamQueryDto } from 'src/modules/movie/dto/get-stream-dto';
+import { SearchAnime } from './dto/search-anime.dto';
 import { StreamService } from './services/stream.service';
 import type { Response } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
@@ -15,14 +14,14 @@ export class MoviesController {
     ) { }
     @SkipThrottle({short : true})
     @Get('anime-pho-bien')
-    async getAnimes(@Query(new ValidationPipe()) query: GetAnime) {
-        const dataPage = await this.moviesService.getPopularityPageAnimes(`page-popularity:${query.page}`, query.page, query.limit)
+    async getPopularityAnimes(@Query(new ValidationPipe()) query: GetAnime) {
+        const dataPage = await this.moviesService.getPopularityPageAnimes(query.page, query.limit)
         return dataPage
     }
      @SkipThrottle({short : true})
     @Get('anime-trong-nam')
     async getYearAnimes(@Query(new ValidationPipe()) query: GetAnime) {
-        const dataPage = await this.moviesService.getYearPageAnimes(`page-year:${query.page}`, query.page, query.limit)
+        const dataPage = await this.moviesService.getYearPageAnimes(query.page, query.limit)
         return dataPage
     }
     @Get('search')
@@ -33,9 +32,8 @@ export class MoviesController {
      @SkipThrottle({short : true})
     @Get('home')
     async getHomePage() {
-        const activeLists = ['banner', 'trending', 'popularity', 'animeOfTheYear','animeReleasing'];
         const limit = 10;
-        return await this.moviesService.getMultipleAnimeLists(limit, activeLists);
+        return await this.moviesService.getMultipleAnimeLists(limit);
     }
      @SkipThrottle({short : true})
     @Get('episodes')

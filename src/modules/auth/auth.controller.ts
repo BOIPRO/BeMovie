@@ -1,9 +1,9 @@
 import { Body, Controller, Post, UseGuards, Res, Req, UnauthorizedException,Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from 'src/common/dto/user.dto';
-import { VerifyEmail } from 'src/common/dto/verify.dto';
-import { ResendDto } from 'src/common/dto/resend.dto';
-import { LoginDto } from 'src/common/dto/login.dto';
+import { CreateUserDto } from 'src/modules/auth/dto/user.dto';
+import { VerifyEmail } from 'src/modules/auth/dto/verify.dto';
+import { ResendDto } from 'src/modules/auth/dto/resend.dto';
+import { LoginDto } from 'src/modules/auth/dto/login.dto';
 import { type Response, type Request } from 'express';
 import { JwtAuthGuard } from 'src/common/guard/JwtAuthGuard';
 @Controller('auth')

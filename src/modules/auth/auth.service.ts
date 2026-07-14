@@ -7,7 +7,7 @@ import * as crypto from 'crypto';
 import { RESEND_CLIENT } from 'src/common/resend.provider';
 import { Resend } from 'resend';
 import { JwtService } from '@nestjs/jwt';
-import { RedisService } from 'src/common/redis/redis.service';
+import { RedisService } from 'src/modules/redis/redis.service';
 @Injectable()
 export class AuthService {
     constructor(
@@ -18,6 +18,7 @@ export class AuthService {
         private readonly redisService: RedisService
     ) { }
     private async sendVerificationEmail(to: string, code: string): Promise<void> {
+        console.log(to)
         try {
             await this.resend.emails.send({
                 from: 'onboarding@resend.dev', // Domain đã verify trên Resend

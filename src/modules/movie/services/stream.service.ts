@@ -1,62 +1,23 @@
 import {  Injectable } from "@nestjs/common";
-import { Episode } from "../schema/episode.schema";
-import { InjectModel} from "@nestjs/mongoose";
-import { Model } from "mongoose";
 import axios from 'axios';
 import { DecryptService } from "./decryptm3u8.service";
-import { RedisService } from "src/common/redis/redis.service";
-export interface EpisodeAnime {
-    anilistID: number,
-    episodeNumber: string,
-    episodeId: string,
-    server: string,
-    episodeSlug: string,
-}
-export interface ExtractedServer {
-    name: string;
-    id: string | undefined;
-    type: string | undefined;
-    token: string | undefined;
-}
-export interface StreamLinkRes {
-    success: number,
-    _fxStatus: number,
-    title: string,
-    link: string,
-    playTech: string
-}
+import { RedisService } from "src/modules/redis/redis.service";
+import { MovieRepository } from "../repository/movie.repository";
+import { EpisodeAnimeType } from "../interface/streamType";
 @Injectable()
 export class StreamService {
     constructor(
-        @InjectModel(Episode.name)
-        private episodeModel: Model<Episode>,
-        // @InjectModel(Movie.name)
-        // private movieModel: Model<Movie>,
+         private readonly movieRepository : MovieRepository,
         private readonly redisService : RedisService,
         private readonly decryptService: DecryptService
     ) {
 
     }
-    async getAnimeEpisodes(id: number): Promise<EpisodeAnime[]> {
-        // const listCache = await this.redisService.get(String(id))
-        // if (listCache) 
-        //     return JSON.parse(listCache)
-        // else {
-              const listEpsiode: EpisodeAnime[] = await this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber")
-            //    this.redisService.set(String(id),JSON.stringify(listEpsiode),300)
-            return listEpsiode
+    async getAnimeEpisodes(id: number): Promise<EpisodeAnimeType[]> {
+      return await this.movieRepository.getListEpisodes(id)
     }
     async getStreamingLink(anilistId: number, episodeSlug: string, provider: string, server: string): Promise<any> {
-        const filter = {
-            episodeSlug: episodeSlug,
-            anilistId: anilistId,
-            "sources.provider": provider
-        };
-        const episode = await this.episodeModel
-            .findOne(filter)
-            .select("sources ")
-            .lean()
-            .exec();
+        const episode = await this.movieRepository.getOneEpisode(anilistId,episodeSlug,provider)
         if (!episode) {
             return ""
         }
