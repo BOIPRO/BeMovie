@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
@@ -69,14 +69,14 @@ export class AuthService {
     async VerifyEmail(email: string, otp: string): Promise<void> {
         const { otpHash } = await this.redisService.get(`otp:${email}`)
         if (!otpHash) {
-            throw new BadRequestException("Ma xac thuc khong dung")
+            throw new BadRequestException("Mã xác thực không đúng")
         }
         const check = crypto.createHash('sha256').update(otp).digest('hex') === otpHash;
         if (check) {
-            await this.userRepository.updateVerifyUser(email)
+            this.userRepository.updateVerifyUser(email)
         }
         else
-            throw new BadRequestException("Ma OTP khong chinh xac")
+            throw new BadRequestException("Mã xác thực không đúng")
     }
 
     async resendCode(email: string): Promise<void> {

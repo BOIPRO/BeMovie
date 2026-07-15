@@ -37,8 +37,8 @@ export class UserRepository {
                 { upsert: true }
             )
         }
-    async updateVerifyUser(email : string) {
-           await this.userModel.updateOne(
+    updateVerifyUser(email : string) {
+            this.userModel.updateOne(
                 { email: email },
                 {
                     $set: {
