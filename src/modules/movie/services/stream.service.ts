@@ -1,7 +1,7 @@
 import {  Injectable } from "@nestjs/common";
 import axios from 'axios';
 import { DecryptService } from "./decryptm3u8.service";
-import { RedisService } from "src/modules/redis/redis.service";
+import { RedisService } from "src/common/redis/redis.service";
 import { MovieRepository } from "../repository/movie.repository";
 import { EpisodeAnimeType } from "../interface/streamType";
 @Injectable()

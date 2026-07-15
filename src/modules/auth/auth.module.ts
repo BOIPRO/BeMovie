@@ -4,9 +4,9 @@ import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User,UserSchema } from './schema/user.schema';
 import { AuthService } from './auth.service';
-import { ResendProvider } from 'src/common/resend.provider';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserRepository } from './repository/user.repository';
 
 @Module({
   imports : [
@@ -24,6 +24,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
   ],
   controllers: [AuthController],
-  providers : [AuthService, ResendProvider]
+  providers : [AuthService,UserRepository]
 })
 export class AuthModule {}
