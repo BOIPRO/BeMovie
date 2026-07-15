@@ -26,17 +26,19 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
       host: 'smtp.gmail.com',
       port: 587,
       secure: false, // dùng cho port 465
-      
+      socketOptions: {
+        family: 4,
+    } ,
       requireTLS: true,
       tls: {
       rejectUnauthorized: false,
     },
-    
+      
       auth: {
         user: 'boibrohihi311@gmail.com',
         pass: process.env.APP_PASSWORD,
       },
-    },
+    } as any,
     defaults: {
       from: '"BMovie App" <boibrohihi311@gmail.com>', // Cũng phải là email này
     },
