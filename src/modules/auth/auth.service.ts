@@ -73,7 +73,7 @@ export class AuthService {
         }
         const check = crypto.createHash('sha256').update(otp).digest('hex') === otpHash;
         if (check) {
-            this.userRepository.updateVerifyUser(email)
+           await this.userRepository.updateVerifyUser(email)
         }
         else
             throw new BadRequestException("Mã xác thực không đúng")

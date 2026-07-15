@@ -3,7 +3,8 @@ import { AppModule } from './app.module';
 import { logger } from './common/middleware/logger.middleware';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
-
+import * as dns from 'dns';
+dns.setDefaultResultOrder('ipv4first');
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const memoryUsage = process.memoryUsage();
@@ -14,6 +15,7 @@ async function bootstrap() {
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   });
+
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.use(logger)
   app.useGlobalPipes(new ValidationPipe({
