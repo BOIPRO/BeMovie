@@ -111,7 +111,7 @@ export class MovieRepository {
             "mappings.provider": "animevietsub",
             "mappings.providerStatus": { $ne: null }
         }
-        const sort = { "anilistData.trending": -1 };
+        const sort = { "anilistData.popularity": -1 };
         const listTrendingAnimes = await this.queryListAnime(match, sort, limit, 0)
         return listTrendingAnimes
     }
