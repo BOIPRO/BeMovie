@@ -45,7 +45,7 @@ export class StreamService {
     }
     private async getDecodeM3U8(idStream: string) {
 
-        const API_URL = `https://storage.googleapiscdn.com/playlist/${idStream}/playlist.m3u8`
+        const API_URL = `https://stream.googleapiscdn.com/playlist/${idStream}/playlist.m3u8`
         const baseHeaders = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': '*/*',
