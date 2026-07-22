@@ -46,6 +46,9 @@ export class MoviesService {
   async findOneAnime (id : number) {
     return await this.movieRepository.findOne(id)
   }
+  async getBannerImage() {
+    return await this.movieRepository.getBannerImage()
+  }
   async suggestAnime(search?: string) { 
     return await this.movieRepository.suggest(search)
   }

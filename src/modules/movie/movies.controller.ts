@@ -60,7 +60,7 @@ export class MoviesController {
     }
     @Get('test')
     async test () {
-        return "hello"
+        return await this.moviesService.getBannerImage()
     }
 }
 @Controller('wakeuptime')

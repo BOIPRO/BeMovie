@@ -24,8 +24,8 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
   MailerModule.forRoot({
     transport: {
       host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // dùng cho port 465
+      port: 465,
+      secure: true,
       socketOptions: {
         family: 4,
     } ,
