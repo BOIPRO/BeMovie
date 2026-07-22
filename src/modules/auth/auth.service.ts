@@ -3,34 +3,32 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from 'src/common/redis/redis.service';
-import { MailerService } from '@nestjs-modules/mailer';
 import { UserRepository } from './repository/user.repository';
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly mailerService: MailerService,
         private readonly userRepository: UserRepository,
         private jwtService: JwtService,
         private readonly redisService: RedisService
     ) { }
     private async sendVerificationEmail(to: string, code: string): Promise<void> {
         console.log(to)
-        try {
-            await this.mailerService.sendMail({
-                to: to,
-                subject: 'Chào mừng bạn đến với BMovie!',
-                text: `Đây là mã otp để xác thưc ứng dụng : ${code}`,
-                html: `
-        <b>Chào bạn!</b> 
-        <p>Chúng tôi vô cùng cảm ơn vì bạn đã đến BMovie.</p>
-        <p>Mã OTP xác thực của bạn là: <strong>${code}</strong></p>
-        <p>Chúc bạn một ngày xem phim vui vẻ, đừng quên lưu lại những bộ phim yêu thích và cho tôi biết trải nghiệm của bạn. Xin cảm ơn!</p>
-    `,
-            });
-        } catch (error) {
-            console.log(error)
-            throw new Error('Không thể gửi email');
-        }
+    //     try {
+    //         await this.mailerService.sendMail({
+    //             to: to,
+    //             subject: 'Chào mừng bạn đến với BMovie!',
+    //             text: `Đây là mã otp để xác thưc ứng dụng : ${code}`,
+    //             html: `
+    //     <b>Chào bạn!</b> 
+    //     <p>Chúng tôi vô cùng cảm ơn vì bạn đã đến BMovie.</p>
+    //     <p>Mã OTP xác thực của bạn là: <strong>${code}</strong></p>
+    //     <p>Chúc bạn một ngày xem phim vui vẻ, đừng quên lưu lại những bộ phim yêu thích và cho tôi biết trải nghiệm của bạn. Xin cảm ơn!</p>
+    // `,
+    //         });
+    //     } catch (error) {
+    //         console.log(error)
+    //         throw new Error('Không thể gửi email');
+    //     }
     }
     private async hashPassword(password: string): Promise<string> {
         const saltOrRounds = 10;
