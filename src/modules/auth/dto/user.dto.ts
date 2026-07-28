@@ -1,10 +1,10 @@
 import { IsInt, IsString, Min, Length, IsNotEmpty, IsEmail, Matches,IsStrongPassword} from 'class-validator';
 import { Transform } from 'class-transformer';
 export class CreateUserDto {
-    @IsString()
-    @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
-    @IsEmail({}, { message: "Email không dúng định dạng." })
-    email!: string;
+    // @IsString()
+    // @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+    // @IsEmail({}, { message: "Email không dúng định dạng." })
+    // email!: string;
     @IsString()
     @IsNotEmpty({ message: "Không được để trống." })
     @Length(3, 30)

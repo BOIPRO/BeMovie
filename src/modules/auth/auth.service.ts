@@ -11,25 +11,6 @@ export class AuthService {
         private jwtService: JwtService,
         private readonly redisService: RedisService
     ) { }
-    private async sendVerificationEmail(to: string, code: string): Promise<void> {
-        console.log(to)
-    //     try {
-    //         await this.mailerService.sendMail({
-    //             to: to,
-    //             subject: 'Chào mừng bạn đến với BMovie!',
-    //             text: `Đây là mã otp để xác thưc ứng dụng : ${code}`,
-    //             html: `
-    //     <b>Chào bạn!</b> 
-    //     <p>Chúng tôi vô cùng cảm ơn vì bạn đã đến BMovie.</p>
-    //     <p>Mã OTP xác thực của bạn là: <strong>${code}</strong></p>
-    //     <p>Chúc bạn một ngày xem phim vui vẻ, đừng quên lưu lại những bộ phim yêu thích và cho tôi biết trải nghiệm của bạn. Xin cảm ơn!</p>
-    // `,
-    //         });
-    //     } catch (error) {
-    //         console.log(error)
-    //         throw new Error('Không thể gửi email');
-    //     }
-    }
     private async hashPassword(password: string): Promise<string> {
         const saltOrRounds = 10;
         return await bcrypt.hash(password, saltOrRounds);
@@ -38,60 +19,44 @@ export class AuthService {
         const otp = crypto.randomInt(100000, 999999).toString();
         return otp;
     }
-    private async sendOtp(email: string) {
-        const otp = this.createOTP();
-        const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
-        await this.redisService.set(`otp:${email}`, JSON.stringify({ otpHash }), 3 * 60)
-        await this.sendVerificationEmail(email, otp)
-    }
-    async validateEmailForRegistration(email: string, username: string, password: string): Promise<void> {
-        const user = await this.userRepository.getUserByEmail(email)
+    async validateUserForRegistration(username: string, password: string): Promise<void> {
+        const user = await this.userRepository.getUserByUsername(username)
         if (user) {
-            if (user.isVerify)
-                throw new ConflictException("Email hoặc tên đăng nhập đã tồn tại")
-            else {
-                await this.userRepository.checkUsernameUnique(username)
-                await this.sendOtp(email)
-                const hashPassword = await this.hashPassword(password)
-                await this.userRepository.addUser(email, username, hashPassword)
-            }
-
+            throw new ConflictException("Tên đăng nhập đã tồn tại")
         }
         else {
-            await this.userRepository.checkUsernameUnique(username)
-            await this.sendOtp(email)
             const hashPassword = await this.hashPassword(password)
-            await this.userRepository.addUser(email, username, hashPassword)
+            await this.userRepository.createUser(username, hashPassword)
         }
     }
-    async VerifyEmail(email: string, otp: string): Promise<void> {
-        const { otpHash } = await this.redisService.get(`otp:${email}`)
-        if (!otpHash) {
-            throw new BadRequestException("Mã xác thực không đúng")
-        }
-        const check = crypto.createHash('sha256').update(otp).digest('hex') === otpHash;
-        if (check) {
-           await this.userRepository.updateVerifyUser(email)
-        }
-        else
-            throw new BadRequestException("Mã xác thực không đúng")
-    }
+    // async VerifyEmail(email: string, otp: string): Promise<void> {
+    //     const { otpHash } = await this.redisService.get(`otp:${email}`)
+    //     if (!otpHash) {
+    //         throw new BadRequestException("Mã xác thực không đúng")
+    //     }
+    //     const check = crypto.createHash('sha256').update(otp).digest('hex') === otpHash;
+    //     if (check) {
+    //         await this.userRepository.updateVerifyUser(email)
+    //     }
+    //     else
+    //         throw new BadRequestException("Mã xác thực không đúng")
+    // }
 
-    async resendCode(email: string): Promise<void> {
-        const user = await this.userRepository.getUserByEmail(email)
-        if (user) {
-            const otp = this.createOTP();
-            const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
-            await this.redisService.set(`otp:${email}`, JSON.stringify({ otpHash }), 3 * 60)
-            await this.sendVerificationEmail(email, otp)
-        }
-        else {
-            throw new BadRequestException("Co loi xay ra")
-        }
-    }
+    // async resendCode(email: string): Promise<void> {
+    //     const user = await this.userRepository.getUserByEmail(email)
+    //     if (user) {
+    //         const otp = this.createOTP();
+    //         const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    //         await this.redisService.set(`otp:${email}`, JSON.stringify({ otpHash }), 3 * 60)
+    //         await this.sendVerificationEmail(email, otp)
+    //     }
+    //     else {
+    //         throw new BadRequestException("Co loi xay ra")
+    //     }
+    // }
     async login(username: string, password: string): Promise<{ user: object; accessToken: string, refreshToken: string }> {
         const user = await this.userRepository.getUserByUsername(username)
-        if (!user || !user.isVerify) {
+        if (!user ) {
             throw new UnauthorizedException('Tên người dùng hoặc mật khẩu không đúng');
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -118,7 +83,6 @@ export class AuthService {
         return {
             user: {
                 id: user._id,
-                email: user.email,
                 username: user.username,
             },
             accessToken,

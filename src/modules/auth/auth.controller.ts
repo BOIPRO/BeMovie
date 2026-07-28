@@ -1,8 +1,6 @@
 import { Body, Controller, Post, UseGuards, Res, Req, UnauthorizedException,Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/modules/auth/dto/user.dto';
-import { VerifyEmail } from 'src/modules/auth/dto/verify.dto';
-import { ResendDto } from 'src/modules/auth/dto/resend.dto';
 import { LoginDto } from 'src/modules/auth/dto/login.dto';
 import { type Response, type Request } from 'express';
 import { JwtAuthGuard } from 'src/common/guard/JwtAuthGuard';
@@ -13,7 +11,7 @@ export class AuthController {
     ) { }
     @Post('register')
     async registerUser(@Body() createUserDto: CreateUserDto) {
-        await this.authService.validateEmailForRegistration(createUserDto.email, createUserDto.username, createUserDto.password)
+        await this.authService.validateUserForRegistration(createUserDto.username, createUserDto.password)
         return new Response(
             JSON.stringify({ message: 'ok' }),
             {
@@ -23,30 +21,30 @@ export class AuthController {
             }
         );
     }
-    @Post('verify')
-    async verifyEmail(@Body() verifyemailDto: VerifyEmail) {
-        await this.authService.VerifyEmail(verifyemailDto.email, verifyemailDto.otp)
-        return new Response(
-            JSON.stringify({ message: 'ok' }),
-            {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-    @Post('resend')
-    async resendCode(@Body() resendDto: ResendDto) {
-        await this.authService.resendCode(resendDto.email)
-        return new Response(
-            JSON.stringify({ message: 'ok' }),
-            {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
+    // @Post('verify')
+    // async verifyEmail(@Body() verifyemailDto: VerifyEmail) {
+    //     await this.authService.VerifyEmail(verifyemailDto.email, verifyemailDto.otp)
+    //     return new Response(
+    //         JSON.stringify({ message: 'ok' }),
+    //         {
+    //             headers: {
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         }
+    //     );
+    // }
+    // @Post('resend')
+    // async resendCode(@Body() resendDto: ResendDto) {
+    //     await this.authService.resendCode(resendDto.email)
+    //     return new Response(
+    //         JSON.stringify({ message: 'ok' }),
+    //         {
+    //             headers: {
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         }
+    //     );
+    // }
     @Get('me')
     @UseGuards(JwtAuthGuard)
     async getProfile(@Req() req : Request) {

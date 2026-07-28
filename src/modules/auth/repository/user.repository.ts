@@ -9,28 +9,19 @@ export class UserRepository {
         @InjectModel(User.name)
         private userModel: Model<User>
     ) { }
-    async getUserByEmail(email: string): Promise<User | null> {
-        const user = await this.userModel.findOne({ email: email }).select("username isVerify").exec()
-        return user
-    }
      async getUserByUsername(username: string) {
-        const user = await this.userModel.findOne({ username: username }).select("username password isVerify email").exec()
+        const user = await this.userModel.findOne({ username: username }).select("username password isVerify").exec()
         return user
     }
     async getUserById(id : string) {
          const userInfo = await this.userModel.find({ _id: id }).select("username email").exec()
         return userInfo
     }
-    async checkUsernameUnique(username: string): Promise<void> {
-        const exists = await this.userModel.findOne({ username }).exec();
-        if (exists) throw new ConflictException("Tên đăng nhập đã tồn tại");
-    }
-    async addUser(email: string, username: string, hashPassword: string): Promise<void> {
+    async createUser(username: string, hashPassword: string): Promise<void> {
             await this.userModel.updateOne(
-                { email: email },
+                {username: username},
                 {
                     $set: {
-                        username: username,
                         password: hashPassword,
                     }
                 },
