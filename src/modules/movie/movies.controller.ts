@@ -58,6 +58,10 @@ export class MoviesController {
     async suggestAnime(@Query('q') query: string) {
         return await this.moviesService.suggestAnime(query);
     }
+    @Get('sitemap')
+    async getAllAnime() {
+        return await this.moviesService.getAllAnimes()
+    }
     @Get('test')
     async test () {
         return await this.moviesService.getBannerImage()

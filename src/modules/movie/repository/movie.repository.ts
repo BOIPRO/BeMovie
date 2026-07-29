@@ -350,7 +350,15 @@ export class MovieRepository {
             totalPages: totalPages
         }
     }
-
+    async getAllAnimes() {
+        
+        const data = await this.animeModel.find({
+             "status": "MAPPED",
+            "mappings.provider": "animevietsub",
+            "mappings.providerStatus": { $ne: null }
+        }).select("anilistId slug -_id").lean().exec()
+        return data
+    }
     async getListEpisodes(id: number): Promise<EpisodeAnimeType[]> {
         const listEpsiode: EpisodeAnimeType[] = await this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber")
 

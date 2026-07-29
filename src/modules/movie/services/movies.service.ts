@@ -43,6 +43,9 @@ export class MoviesService {
     animeReleasing : listAnimeReleasing
    }
   }
+  async getAllAnimes () {
+    return await this.movieRepository.getAllAnimes()
+  }
   async findOneAnime (id : number) {
     return await this.movieRepository.findOne(id)
   }
