@@ -84,6 +84,7 @@ export class AuthService {
             user: {
                 id: user._id,
                 username: user.username,
+                avatar : user.avatar
             },
             accessToken,
             refreshToken,

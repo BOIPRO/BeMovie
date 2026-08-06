@@ -10,11 +10,11 @@ export class UserRepository {
         private userModel: Model<User>
     ) { }
      async getUserByUsername(username: string) {
-        const user = await this.userModel.findOne({ username: username }).select("username password isVerify").exec()
+        const user = await this.userModel.findOne({ username: username }).select("username password avatar").exec()
         return user
     }
     async getUserById(id : string) {
-         const userInfo = await this.userModel.find({ _id: id }).select("username email").exec()
+         const userInfo = await this.userModel.find({ _id: id }).select("username avatar").exec()
         return userInfo
     }
     async createUser(username: string, hashPassword: string): Promise<void> {
