@@ -6,6 +6,7 @@ import { DatabaseModule } from './common/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, }),
   ThrottlerModule.forRoot([{
@@ -19,7 +20,7 @@ import { APP_GUARD } from '@nestjs/core';
     limit: 1000,
   },
   ]),
-    RedisModule, MoviesModule, DatabaseModule, AuthModule],
+    RedisModule, MoviesModule, DatabaseModule, AuthModule,CloudinaryModule],
   providers: [
     {
       provide: APP_GUARD,
