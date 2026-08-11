@@ -86,6 +86,7 @@ export class StreamService {
 
             // const sizeInKB = (sizeInBytes / 1024).toFixed(2);
             // console.log(`Dung lượng rawData: ${sizeInKB} KB`);
+            console.log(`Đã tải lên M3U8 lên Supabase và lấy public URL: ${publicUrl}`);
             return publicUrl
         }
         catch (error: any) {

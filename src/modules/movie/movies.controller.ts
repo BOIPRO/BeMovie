@@ -1,4 +1,4 @@
-import { Controller, Get, ParseIntPipe, Query, Res, ValidationPipe,UseGuards } from '@nestjs/common';
+import { Controller, Get, ParseIntPipe, Query, Res, ValidationPipe, UseGuards, Headers } from '@nestjs/common';
 import { MoviesService } from './services/movies.service';
 import { GetAnime } from './dto/get-anime.dto';
 import { GetStreamQueryDto } from 'src/modules/movie/dto/get-stream-dto';
@@ -12,42 +12,43 @@ export class MoviesController {
         private readonly moviesService: MoviesService,
         private readonly streamService: StreamService
     ) { }
-    @SkipThrottle({short : true})
+    @SkipThrottle({ short: true })
     @Get('anime-pho-bien')
     async getPopularityAnimes(@Query(new ValidationPipe()) query: GetAnime) {
         const dataPage = await this.moviesService.getPopularityPageAnimes(query.page, query.limit)
         return dataPage
     }
-     @SkipThrottle({short : true})
+    @SkipThrottle({ short: true })
     @Get('anime-trong-nam')
     async getYearAnimes(@Query(new ValidationPipe()) query: GetAnime) {
         const dataPage = await this.moviesService.getYearPageAnimes(query.page, query.limit)
         return dataPage
     }
+    @SkipThrottle({ short: true })
     @Get('search')
     async searchAnime(@Query(new ValidationPipe()) query: SearchAnime) {
         const data = await this.moviesService.searchAnime(query.s, query.page, query.limit);
         return data
     }
-     @SkipThrottle({short : true})
+    @SkipThrottle({ short: true })
     @Get('home')
     async getHomePage() {
         const limit = 10;
         return await this.moviesService.getMultipleAnimeLists(limit);
     }
-     @SkipThrottle({short : true})
+    @SkipThrottle({ short: true })
     @Get('episodes')
     async getAnimeEpisode(@Query('id', ParseIntPipe) id: number) {
         return await this.streamService.getAnimeEpisodes(id)
     }
-     @SkipThrottle({short : true})
+    @SkipThrottle({ short: true })
     @Get('info')
     async GetInfoAnime(@Query('id', ParseIntPipe) id: number) {
         return (await this.moviesService.findOneAnime(id))
     }
-     @SkipThrottle({short : true})
+    @SkipThrottle({ short: true })
     @Get('stream')
-    async getStreamAnime(@Query() query: GetStreamQueryDto ,@Res() res: Response) {
+    async getStreamAnime(@Query() query: GetStreamQueryDto, @Res() res: Response) {
         const data: any = await this.streamService.getStreamingLink(query.anilistId, query.episodeSlug, query.provider, query.server);
         const m3u8Content = typeof data === 'object' ? data.m3u8 : data;
         res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
@@ -55,7 +56,9 @@ export class MoviesController {
         return res.send(m3u8Content);
     }
     @Get('suggest')
-    async suggestAnime(@Query('q') query: string) {
+    async suggestAnime(@Query('q') query: string,@Headers('x-forwarded-for') forwardedFor: string) {
+        const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
+        console.log(`IP thực của client nhận được ở NestJS: ${clientIp}`);
         return await this.moviesService.suggestAnime(query);
     }
     @Get('sitemap')
@@ -63,7 +66,7 @@ export class MoviesController {
         return await this.moviesService.getAllAnimes()
     }
     @Get('test')
-    async test () {
+    async test() {
         return await this.moviesService.getBannerImage()
     }
 }
