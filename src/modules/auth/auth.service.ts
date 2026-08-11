@@ -1,6 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from 'src/common/redis/redis.service';
 import { UserRepository } from './repository/user.repository';
@@ -15,10 +14,10 @@ export class AuthService {
         const saltOrRounds = 10;
         return await bcrypt.hash(password, saltOrRounds);
     }
-    private createOTP(): string {
-        const otp = crypto.randomInt(100000, 999999).toString();
-        return otp;
-    }
+    // private createOTP(): string {
+    //     const otp = crypto.randomInt(100000, 999999).toString();
+    //     return otp;
+    // }
     async validateUserForRegistration(username: string, password: string): Promise<void> {
         const user = await this.userRepository.getUserByUsername(username)
         if (user) {

@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
+import { SupabaseModule } from './common/supabase/supabase.module';
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, }),
   ThrottlerModule.forRoot([{
@@ -20,7 +21,7 @@ import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
     limit: 1000,
   },
   ]),
-    RedisModule, MoviesModule, DatabaseModule, AuthModule,CloudinaryModule],
+    RedisModule, MoviesModule, DatabaseModule, AuthModule,CloudinaryModule,SupabaseModule],
   providers: [
     {
       provide: APP_GUARD,
