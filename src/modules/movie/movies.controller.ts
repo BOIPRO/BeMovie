@@ -1,11 +1,11 @@
-import { Controller, Get, ParseIntPipe, Query, Res, ValidationPipe, UseGuards, Headers } from '@nestjs/common';
+import { Controller, Get, ParseIntPipe, Query, Res, ValidationPipe, Headers } from '@nestjs/common';
 import { MoviesService } from './services/movies.service';
 import { GetAnime } from './dto/get-anime.dto';
 import { GetStreamQueryDto } from 'src/modules/movie/dto/get-stream-dto';
 import { SearchAnime } from './dto/search-anime.dto';
 import { StreamService } from './services/stream.service';
 import type { Response } from 'express';
-import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 @Controller('movies')
 export class MoviesController {
     constructor(

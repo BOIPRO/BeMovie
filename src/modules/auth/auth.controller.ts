@@ -4,6 +4,8 @@ import { CreateUserDto } from 'src/modules/auth/dto/user.dto';
 import { LoginDto } from 'src/modules/auth/dto/login.dto';
 import { type Response, type Request } from 'express';
 import { JwtAuthGuard } from 'src/common/guard/JwtAuthGuard';
+import { Throttle } from '@nestjs/throttler';
+@Throttle({ long: { ttl: 60000, limit: 100 } })
 @Controller('auth')
 export class AuthController {
     constructor(
