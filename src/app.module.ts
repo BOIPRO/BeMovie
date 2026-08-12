@@ -10,11 +10,7 @@ import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 import { SupabaseModule } from './common/supabase/supabase.module';
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, }),
-  ThrottlerModule.forRoot([{
-    name: 'short',
-    ttl: 60000,
-    limit: 100,
-  },
+  ThrottlerModule.forRoot([
   {
     name: 'long',
     ttl: 60000,
