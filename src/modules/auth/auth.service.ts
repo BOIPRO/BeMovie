@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, UnauthorizedExcepti
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from 'src/common/redis/redis.service';
-import { UserRepository } from './repository/user.repository';
+import { UserRepository } from '../user/repository/user.repository';
 @Injectable()
 export class AuthService {
     constructor(
@@ -89,8 +89,8 @@ export class AuthService {
             refreshToken,
         };
     }
-    async getProfile(id: string) {
-        const userInfo = await this.userRepository.getUserById(id)
+    async getMe(id: string) {
+        const userInfo = await this.userRepository.getMeById(id)
         return userInfo
     }
     async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
