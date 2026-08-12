@@ -53,7 +53,7 @@ export class MoviesController {
         res.setHeader('Access-Control-Allow-Origin', '*');
         return res.send(m3u8Content);
     }
-    @Throttle({ long: { ttl: 60000, limit: 10 } })
+    @Throttle({ long: { ttl: 60000, limit: 100 } })
     @Get('suggest')
     async suggestAnime(@Query('q') query: string,@Headers('x-forwarded-for') forwardedFor: string) {
         const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
