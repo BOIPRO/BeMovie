@@ -9,7 +9,7 @@ export class UserController {
     async getProfile(@Req() req: Request) {
         const user = (req as any).user;
         const userInfo = await this.userService.getUserInfo(user.id)
-        console.log(userInfo[0])
-        return userInfo[0]
+        console.log(userInfo)
+        return userInfo;
     }
 }
