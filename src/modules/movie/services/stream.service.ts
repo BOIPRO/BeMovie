@@ -66,7 +66,7 @@ export class StreamService {
             const m3u8FromSupabase = this.getM3U8URLFromSupabase(`${idStream}.m3u8`);
             return m3u8FromSupabase
         }
-        const API_URL = `https://stream.googleapiscdn.com/playlist/${idStream}/playlist.m3u8`
+        const API_URL = `https://storage.googleapiscdn.com/playlist/${idStream}/playlist.m3u8`
         const baseHeaders = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': '*/*',
