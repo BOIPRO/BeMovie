@@ -44,7 +44,20 @@ export class AnilistDataDetail {
 
   @Prop({ type: Number, default: 0 })
   episodes!: number;
-
+  @Prop({ type: String })
+  format!: string;
+  @Prop({
+    type: {
+      year: Number,
+      month: Number,
+      day: Number,
+    },
+  })
+  startDate: {
+    year: number,
+    month: number,
+    day: number
+  }
   @Prop({ type: Number })
   seasonYear!: number;
 
@@ -60,15 +73,15 @@ export class AnilistDataDetail {
   @Prop({ type: String })
   description!: string;
 
-  @Prop({ type: Number, index: true,default: 0 },)
+  @Prop({ type: Number, index: true, default: 0 },)
   trending!: number;
 
   @Prop({ type: Number, default: 0 })
   popularity!: number;
-  @Prop({ type: Number})
-  averageScore! : number
-   @Prop({ type: String})
-  bannerImage! : string
+  @Prop({ type: Number })
+  averageScore!: number
+  @Prop({ type: String })
+  bannerImage!: string
   @Prop({ type: SchemaFactory.createForClass(TrailerDetail), default: null })
   trailer!: TrailerDetail | null;
 }
@@ -111,24 +124,26 @@ export class Anime {
   @Prop({ type: String, required: true })
   title!: string;
 
-  @Prop({ 
-    type: String, 
-    required: true, 
-    enum: ['MAPPED', 'UNMAPPED'], 
-    default: 'UNMAPPED' 
+  @Prop({
+    type: String,
+    required: true,
+    enum: ['MAPPED', 'UNMAPPED'],
+    default: 'UNMAPPED'
   })
   status!: string;
 
   @Prop({ type: Number, default: null, index: true })
   anilistId!: number;
 
-  @Prop({ 
-    type: SchemaFactory.createForClass(AnilistDataDetail), 
-    default: null 
+  @Prop({
+    type: SchemaFactory.createForClass(AnilistDataDetail),
+    default: null
   })
-  anilistData!: AnilistDataDetail;
   @Prop({type : String})
-  currentEpisode! : string
+  seriesId! : string;
+  anilistData!: AnilistDataDetail;
+  @Prop({ type: String })
+  currentEpisode!: string
   @Prop({ type: [SchemaFactory.createForClass(ProviderMapping)] })
   mappings!: ProviderMapping[];
 }
@@ -151,9 +166,9 @@ AnimeSchema.index(
   { partialFilterExpression: { status: "MAPPED" } }
 );
 // AnimeSchema.index({ 'mappings.provider': 1, 'mappings.providerId': 1 });
-// AnimeSchema.index({ 
-//   "status": 1, 
-//   "mappings.provider": 1, 
-//   "mappings.providerStatus": 1, 
-//   "anilistData.trending": -1 
+// AnimeSchema.index({
+//   "status": 1,
+//   "mappings.provider": 1,
+//   "mappings.providerStatus": 1,
+//   "anilistData.trending": -1
 // });

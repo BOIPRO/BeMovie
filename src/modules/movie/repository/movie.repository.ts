@@ -86,7 +86,7 @@ export class MovieRepository {
                     title: "$mappings.title",
                     "anilistData.bannerImage": 1,
                     "anilistData.trailer": 1,
-                    "anilistData.averageScore" : 1,
+                    "anilistData.averageScore": 1,
                     "anilistData.coverImage.large": 1,
                     "anilistData.seasonYear": 1,
                     firstEpisode: { $arrayElemAt: ["$firstEpisode.episodeSlug", 0] }
@@ -138,11 +138,56 @@ export class MovieRepository {
         return listAnimeReleasing
 
     }
-    async findOne(id: number): Promise<Partial<Anime>[]> {
+    async findOne(id: number) {
         const data = await this.animeModel.aggregate([
             // 1. Tìm đúng document cần thiết
             { $match: { anilistId: id } },
+            {
+                $lookup: {
+                    from: "animes",
+                    let: {
+                        currentSeriesId: "$seriesId"
+                    },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        {
+                                            $ne: [
+                                                "$$currentSeriesId",
+                                                null
+                                            ]
+                                        },
+                                        {
+                                            $eq: [
+                                                "$seriesId",
+                                                "$$currentSeriesId"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $sort: {
+                                "anilistData.seasonYear": 1
+                            }
+                        },
 
+                        // Lấy thông tin relation
+                        {
+                            $project: {
+                                anilistId: 1,
+                                "anilistData.format" : 1,
+                                "anilistData.startDate" : 1,
+                                slug: 1,
+                            }
+                        }
+                    ],
+                    as: "relation"
+                }
+            },
             // 2. Chuyển đổi dữ liệu để lọc title
             {
                 $project: {
@@ -155,6 +200,8 @@ export class MovieRepository {
                     "anilistData.averageScore": 1,
                     "mappings.description": 1,
                     slug: 1,
+                    relation: 1,
+                    seriesId : 1,
                     // Lọc title của animevietsub từ mảng mappings
                     animevietInfo: {
                         $let: {
@@ -176,9 +223,11 @@ export class MovieRepository {
                 $project: {
                     anilistId: 1,
                     "anilistData": 1,
+                    seriesId : 1,
                     slug: 1,
                     title: "$animevietInfo.title",
-                    description: "$animevietInfo.description"
+                    description: "$animevietInfo.description",
+                    relation: 1
                 }
             }
         ]);
@@ -351,9 +400,9 @@ export class MovieRepository {
         }
     }
     async getAllAnimes() {
-        
+
         const data = await this.animeModel.find({
-             "status": "MAPPED",
+            "status": "MAPPED",
             "mappings.provider": "animevietsub",
             "mappings.providerStatus": { $ne: null }
         }).select("anilistId slug -_id").lean().exec()
@@ -364,8 +413,8 @@ export class MovieRepository {
 
         return listEpsiode
     }
-    async getOneEpisode(anilistId: number, episodeSlug: string,provider: string) {
-         const filter = {
+    async getOneEpisode(anilistId: number, episodeSlug: string, provider: string) {
+        const filter = {
             episodeSlug: episodeSlug,
             anilistId: anilistId,
             "sources.provider": provider
@@ -377,14 +426,14 @@ export class MovieRepository {
             .exec()
         return episode
     }
-      async getBannerImage() {
+    async getBannerImage() {
         const URL = 'https://graphql.anilist.co';
         const CHUNK_SIZE = 50;
         const finalResults = {};
         const chunkArray = (arr, size) =>
-          Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
-            arr.slice(i * size, i * size + size)
-          );
+            Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+                arr.slice(i * size, i * size + size)
+            );
         const query = `
     query ($ids: [Int]) {
       Page(page: 1, perPage: 50) {
@@ -396,61 +445,61 @@ export class MovieRepository {
     }
     `;
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        const data = await this.animeModel.find({ 
+        const data = await this.animeModel.find({
             status: "MAPPED",
-            "anilistData.averageScore" : { $exists: false }
-         }).distinct("anilistId");
+            "anilistData.averageScore": { $exists: false }
+        }).distinct("anilistId");
         console.log(data.length)
         const chunks = Array.from({ length: Math.ceil(data.length / CHUNK_SIZE) }, (v, i) =>
-          data.slice(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE)
+            data.slice(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE)
         );
         for (let i = 0; i < chunks.length; i++) {
-          const chunk = chunks[i];
+            const chunk = chunks[i];
 
-          try {
-            // 1. Fetch dữ liệu từ AniList
-            const response = await fetch(URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query, variables: { ids: chunk } })
-            });
+            try {
+                // 1. Fetch dữ liệu từ AniList
+                const response = await fetch(URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, variables: { ids: chunk } })
+                });
 
-            if (!response.ok) {
-              console.error(`❌ Lỗi API AniList tại nhóm ${i + 1}`);
-              continue;
+                if (!response.ok) {
+                    console.error(`❌ Lỗi API AniList tại nhóm ${i + 1}`);
+                    continue;
+                }
+
+                const resData = await response.json();
+                const mediaList = resData.data.Page.media;
+
+                if (mediaList.length === 0) continue;
+
+                // 2. Tạo mảng các thao tác (Operations) cho bulkWrite
+                const bulkOps = mediaList.map(anime => ({
+                    updateOne: {
+                        filter: { anilistId: anime.id }, // Tìm theo AniList ID
+                        update: {
+                            $set: {
+                                "anilistData.averageScore": anime.averageScore,
+                            }
+                        },
+                        upsert: false
+                    }
+                }));
+                // 3. Thực thi bulkWrite ghi thẳng vào DB
+                const bulkResult = await this.animeModel.bulkWrite(bulkOps);
+
+                console.log(`✅ [Nhóm ${i + 1}/${chunks.length}] Ghi DB thành công: Upserted: ${bulkResult.upsertedCount}, Modified: ${bulkResult.modifiedCount}`);
+
+                // Tránh spam API AniList quá nhanh
+                await sleep(1500);
+
+            } catch (error) {
+                console.error(`❌ Lỗi tại nhóm thứ ${i + 1}:`, error);
             }
-
-            const resData = await response.json();
-            const mediaList = resData.data.Page.media;
-
-            if (mediaList.length === 0) continue;
-
-            // 2. Tạo mảng các thao tác (Operations) cho bulkWrite
-            const bulkOps = mediaList.map(anime => ({
-              updateOne: {
-                filter: { anilistId: anime.id }, // Tìm theo AniList ID
-                update: {
-                  $set: {
-                    "anilistData.averageScore": anime.averageScore,
-                  }
-                },
-                upsert: false
-              }
-            }));
-            // 3. Thực thi bulkWrite ghi thẳng vào DB
-            const bulkResult = await this.animeModel.bulkWrite(bulkOps);
-
-            console.log(`✅ [Nhóm ${i + 1}/${chunks.length}] Ghi DB thành công: Upserted: ${bulkResult.upsertedCount}, Modified: ${bulkResult.modifiedCount}`);
-
-            // Tránh spam API AniList quá nhanh
-            await sleep(1500);
-
-          } catch (error) {
-            console.error(`❌ Lỗi tại nhóm thứ ${i + 1}:`, error);
-          }
         }
 
 
-      }
+    }
 
 }
