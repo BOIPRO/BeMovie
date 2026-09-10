@@ -30,7 +30,7 @@ export class MoviesController {
     @Get('home')
     getHomePage() {
         const limit = 10;
-        return  this.moviesService.getMultipleAnimeLists(limit);
+        return this.moviesService.getMultipleAnimeLists(limit);
     }
 
     @Get('episodes')
