@@ -30,8 +30,8 @@ export class StreamService {
             throw new Error('Không thể tải lên M3U8 lên Supabase');
         }
     }
-    async getAnimeEpisodes(id: number): Promise<EpisodeAnimeType[]> {
-        return await this.movieRepository.getListEpisodes(id)
+    getAnimeEpisodes(id: number): Promise<EpisodeAnimeType[]> {
+        return this.movieRepository.getListEpisodes(id)
     }
     async getStreamingLink(anilistId: number, episodeSlug: string, provider: string, server: string): Promise<any> {
         const episode = await this.movieRepository.getOneEpisode(anilistId, episodeSlug, provider)

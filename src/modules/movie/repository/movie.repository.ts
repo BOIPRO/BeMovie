@@ -14,8 +14,8 @@ export class MovieRepository {
         @InjectModel(Episode.name)
         private episodeModel: Model<Episode>,
     ) { }
-    private queryListAnime = async (conditionalMatch: Record<string, any>, conditionalSort: Record<string, any>, limit: number, skip: number) => {
-        const data = await this.animeModel.aggregate([
+    private queryListAnime =  (conditionalMatch: Record<string, any>, conditionalSort: Record<string, any>, limit: number, skip: number) => {
+        return this.animeModel.aggregate([
             {
                 $match: conditionalMatch
             },
@@ -46,11 +46,9 @@ export class MovieRepository {
                 }
             }
         ]);
-
-        return data;
     }
-    async getListBanner() {
-        const bannerAnime = await this.animeModel.aggregate([
+     getListBanner() {
+        return this.animeModel.aggregate([
             {
                 $match: {
                     status: "MAPPED",
@@ -93,29 +91,26 @@ export class MovieRepository {
                 }
             }
         ]);
-        return bannerAnime
     }
-    async getListTrending(limit: number) {
+    getListTrending(limit: number) {
         const match = {
             status: "MAPPED",
             "mappings.provider": "animevietsub",
             "mappings.providerStatus": { $ne: null }
         }
         const sort = { "anilistData.trending": -1 };
-        const listTrendingAnimes = await this.queryListAnime(match, sort, limit, 0)
-        return listTrendingAnimes
+        return this.queryListAnime(match, sort, limit, 0)
     }
-    async getListPopularity(limit: number) {
+    getListPopularity(limit: number) {
         const match = {
             status: "MAPPED",
             "mappings.provider": "animevietsub",
             "mappings.providerStatus": { $ne: null }
         }
         const sort = { "anilistData.popularity": -1 };
-        const listTrendingAnimes = await this.queryListAnime(match, sort, limit, 0)
-        return listTrendingAnimes
+        return this.queryListAnime(match, sort, limit, 0)
     }
-    async getListAnimeOfTheYear(limit: number) {
+    getListAnimeOfTheYear(limit: number) {
         const nowYear = new Date().getFullYear()
         const match = {
             status: "MAPPED",
@@ -124,22 +119,21 @@ export class MovieRepository {
             "anilistData.seasonYear": nowYear
         }
         const sort = { "anilistData.trending": -1 }
-        const listAnimesOfYear = this.queryListAnime(match, sort, limit, 0)
-        return listAnimesOfYear
+        return this.queryListAnime(match, sort, limit, 0)
+    
     }
-    async getListAnimeReleasing(limit: number) {
+    getListAnimeReleasing(limit: number) {
         const match = {
             status: "MAPPED",
             "mappings.provider": "animevietsub",
             "mappings.providerStatus": { $ne: "Completed" },
         }
         const sort = { "updatedAt": -1 }
-        const listAnimeReleasing = this.queryListAnime(match, sort, limit, 0)
-        return listAnimeReleasing
+        return this.queryListAnime(match, sort, limit, 0)
 
     }
-    async findOne(id: number) {
-        const data = await this.animeModel.aggregate([
+    findOne(id: number) {
+       return this.animeModel.aggregate([
             // 1. Tìm đúng document cần thiết
             { $match: { anilistId: id } },
             {
@@ -231,10 +225,6 @@ export class MovieRepository {
                 }
             }
         ]);
-        if (!data) {
-            throw new NotFoundException("Cant find anime");
-        }
-        return data[0]
     }
     async getYearPage(page: number = 1, limit: number = 30): Promise<{
         media: any[];
@@ -282,8 +272,8 @@ export class MovieRepository {
             totalPages: totalPages
         }
     }
-    async suggest(search?: string) {
-        const result = await this.animeModel.aggregate([
+    suggest(search?: string) {
+        return this.animeModel.aggregate([
             {
                 $search: {
                     index: "default",
@@ -331,7 +321,6 @@ export class MovieRepository {
                 }
             }
         ])
-        return result
     }
     async searchAnime(search?: string, page: number = 1, limit: number = 30): Promise<{
         media: any[];
@@ -399,19 +388,16 @@ export class MovieRepository {
             totalPages: totalPages
         }
     }
-    async getAllAnimes() {
-
-        const data = await this.animeModel.find({
+    getAllAnimes() {
+       return this.animeModel.find({
             "status": "MAPPED",
             "mappings.provider": "animevietsub",
             "mappings.providerStatus": { $ne: null }
         }).select("anilistId slug -_id").lean().exec()
-        return data
     }
-    async getListEpisodes(id: number): Promise<EpisodeAnimeType[]> {
-        const listEpsiode: EpisodeAnimeType[] = await this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber")
+    getListEpisodes(id: number): Promise<EpisodeAnimeType[]> {
+        return this.episodeModel.find({ anilistId: id }).select("episodeSlug episodeNumber")
 
-        return listEpsiode
     }
     async getOneEpisode(anilistId: number, episodeSlug: string, provider: string) {
         const filter = {
@@ -419,12 +405,11 @@ export class MovieRepository {
             anilistId: anilistId,
             "sources.provider": provider
         };
-        const episode = await this.episodeModel
+       return this.episodeModel
             .findOne(filter)
             .select("sources ")
             .lean()
             .exec()
-        return episode
     }
     async getBannerImage() {
         const URL = 'https://graphql.anilist.co';

@@ -91,9 +91,9 @@ export class AuthService {
     }
     async getMe(id: string) {
         const userInfo = await this.userRepository.getMeById(id)
-        return userInfo
+        return userInfo[0]
     }
-    async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+    refreshAccessToken(refreshToken: string): { accessToken: string } {
         try {
             const decoded = this.jwtService.verify(refreshToken);
             const accessToken = this.jwtService.sign(

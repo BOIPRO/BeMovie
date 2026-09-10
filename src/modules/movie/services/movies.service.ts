@@ -6,26 +6,23 @@ export class MoviesService {
   constructor(
     private readonly movieRepository: MovieRepository
   ) { }
-  async getPopularityPageAnimes(page: number, limit: number): Promise<{
+  getPopularityPageAnimes(page: number, limit: number): Promise<{
     media: any[];
     totalPages: number;
   }> {
-    const data = await this.movieRepository.getPopularityPage(page, limit);
-    return data
+    return this.movieRepository.getPopularityPage(page, limit);
   }
-  async getYearPageAnimes(page: number, limit: number): Promise<{
+  getYearPageAnimes(page: number, limit: number): Promise<{
     media: any[];
     totalPages: number;
   }> {
-    const data = await this.movieRepository.getYearPage(page, limit);
-    return data
+     return  this.movieRepository.getYearPage(page, limit);
   }
-  async searchAnime(search?: string, page: number = 1, limit: number = 30): Promise<{
+  searchAnime(search?: string, page: number = 1, limit: number = 30): Promise<{
     media: any[];
     totalPages: number;
   }> {
-    const infoListSearchAnime = await this.movieRepository.searchAnime(search, page, limit)
-    return infoListSearchAnime
+   return this.movieRepository.searchAnime(search, page, limit)
   }
   async getMultipleAnimeLists(limit: number) {
     const [listBanner, listTrending, listPopularity, listAnimesOfYear, listAnimeReleasing] = await Promise.all([
@@ -43,17 +40,16 @@ export class MoviesService {
       animeReleasing: listAnimeReleasing
     }
   }
-  async getAllAnimes() {
-    return await this.movieRepository.getAllAnimes()
+  getAllAnimes() {
+    return  this.movieRepository.getAllAnimes()
   }
   async findOneAnime(id: number) {
-  const animeDetails = await this.movieRepository.findOne(id);
-
-  if (!animeDetails) {
-    return null;
+  const data = await this.movieRepository.findOne(id);
+  if (!data)  {
+      throw new NotFoundException("Cant find anime");
   }
+  const animeDetails = data[0]
 
-  // Sắp xếp tất cả relation theo ngày phát hành
   const relations = [...(animeDetails.relation ?? [])].sort((a, b) => {
     const dateA = new Date(
       a.anilistData?.startDate?.year ?? 9999,
@@ -70,7 +66,6 @@ export class MoviesService {
     return dateA - dateB;
   });
 
-  // Đếm riêng từng format
   const formatCount: Record<string, number> = {};
 
   const formatName: Record<string, string> = {
@@ -126,10 +121,10 @@ export class MoviesService {
     relation: sortedRelations,
   };
 }
-  async getBannerImage() {
-    return await this.movieRepository.getBannerImage()
+  getBannerImage() {
+    return  this.movieRepository.getBannerImage()
   }
-  async suggestAnime(search?: string) {
-    return await this.movieRepository.suggest(search)
+  suggestAnime(search?: string) {
+    return  this.movieRepository.suggest(search)
   }
 }

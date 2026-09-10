@@ -9,20 +9,17 @@ export class UserRepository {
         @InjectModel(User.name)
         private userModel: Model<User>
     ) { }
-    async getUserByUsername(username: string) {
-        const user = await this.userModel.findOne({ username: username }).select("username password avatar").exec()
-        return user
+    getUserByUsername(username: string) {
+        return this.userModel.findOne({ username: username }).select("username password avatar").exec()
     }
-    async getMeById(id: string) {
-        const userInfo = await this.userModel.find({ _id: id }).select("username avatar").exec()
-        return userInfo
+    getMeById(id: string) {
+        return this.userModel.find({ _id: id }).select("username avatar").exec()
     }
-    async getUserById(id: string) {
-        const userInfo = await this.userModel.find({ _id: id }).select("username avatar").exec()
-        return userInfo
+    getUserById(id: string) {
+      return  this.userModel.find({ _id: id }).select("username avatar").exec()
     }
-    async getListFavoriteAnimesByUserId(id: string) {
-    const listAnimeInfo = await this.userModel.aggregate([
+    getListFavoriteAnimesByUserId(id: string) {
+        return this.userModel.aggregate([
         { $match: { _id: new Types.ObjectId(id) } },
         {
             $project: {
@@ -87,8 +84,6 @@ export class UserRepository {
             }
         }
     ]);
-    
-    return listAnimeInfo[0]?.favoriteAnimesDetails || { favoriteAnimesDetails: [] };
 }
     async createUser(username: string, hashPassword: string): Promise<void> {
         await this.userModel.updateOne(
